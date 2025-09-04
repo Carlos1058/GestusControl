@@ -1,0 +1,46 @@
+{
+  "LIKE": {
+    "accion": "confirmacion",
+    "descripcion": "Confirma la ejecución de una acción."
+  },
+  "MANO_ABIERTA": {
+    "accion": "abrir_menu_inicio",
+    "descripcion": "Abre el menú de inicio (Tecla Windows)."
+  },
+  "PUNO_CERRADO": {
+    "accion": "silenciar_volumen",
+    "descripcion": "Silencia o activa el sonido del sistema."
+  },
+  "APUNTAR": {
+    "accion": "abrir_youtube",
+    "descripcion": "Abre YouTube en el navegador."
+  },
+  "PAZ": {
+    "accion": "subir_volumen",
+    "descripcion": "Sube el volumen del sistema."
+  },
+  "CUERNOS": {
+    "accion": "activar_cortana",
+    "descripcion": "Activa Cortana o Copilot (Win+C)."
+  },
+  "LLAMAME": {
+    "accion": "abrir_wikipedia",
+    "descripcion": "Abre Wikipedia en el navegador."
+  },
+  "PULGAR_ABAJO": {
+    "accion": "bajar_volumen",
+    "descripcion": "Baja el volumen del sistema."
+  },
+  "OK": {
+    "accion": "abrir_calculadora",
+    "descripcion": "Abre la calculadora del sistema."
+  },
+  "GESTO_EXTRA_1": {
+    "accion": "subir_brillo",
+    "descripcion": "Sube el brillo de la pantalla."
+  },
+  "GESTO_EXTRA_2": {
+    "accion": "bajar_brillo",
+    "descripcion": "Baja el brillo de la pantalla."
+  }
+}
