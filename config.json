@@ -1,11 +1,11 @@
 {
   "LIKE": {
     "accion": "confirmacion",
-    "descripcion": "Confirma la ejecución de una acción."
+    "descripcion": "Confirma la ejecucion de una accion."
   },
   "MANO_ABIERTA": {
     "accion": "abrir_menu_inicio",
-    "descripcion": "Abre el menú de inicio (Tecla Windows)."
+    "descripcion": "Abre el menu de inicio (Tecla Windows)."
   },
   "PUNO_CERRADO": {
     "accion": "silenciar_volumen",
