@@ -85,13 +85,13 @@ class DialogoListaGestos(QDialog):
             tarjeta_layout.setContentsMargins(12, 10, 12, 10)
             tarjeta_layout.setSpacing(4)
 
-            label_titulo = QLabel(f"<b>{gesto["nombre"]}</b>")
+            label_titulo = QLabel(f"<b>{gesto['nombre']}</b>")
             label_titulo.setStyleSheet("font-size: 16px; color: #1B5E20;")
 
-            label_accion = QLabel(f"Acción: <i>{acciones[gesto['accion']]["nombre"]}</i>")
+            label_accion = QLabel(f"Acción: <i>{acciones[gesto['accion']]['nombre']}</i>")
             label_accion.setStyleSheet("font-size: 14px; color: #000000;")
+            label_desc = QLabel(f"{acciones[gesto['accion']]['descripcion']}")
 
-            label_desc = QLabel(f"{acciones[gesto['accion']]["descripcion"]}")
             label_desc.setWordWrap(True)
             label_desc.setStyleSheet("font-size: 13px; color: #000000;")
 

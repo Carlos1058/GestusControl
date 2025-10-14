@@ -161,7 +161,7 @@ class VentanaPrincipal(QMainWindow):
         try:
             with open('config.json', 'r') as f:
                 config = json.load(f)
-                gestos_a_mostrar = random.sample(config["gestos"][1:], min(3, len(config["gestos"])))
+                gestos_a_mostrar = random.sample(config["gestos"][1:-2], min(3, len(config["gestos"])))
                 for gesto in gestos_a_mostrar:
                     nombre_gesto = gesto["nombre"]
                     descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
