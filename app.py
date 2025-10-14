@@ -159,13 +159,26 @@ class VentanaPrincipal(QMainWindow):
                 child.widget().deleteLater()
 
         try:
+            emojis = {
+                "Like": "👍🏻",
+                "Mano abierta": "✋🏻",
+                "Puno cerrado": "✊🏻",
+                "Apuntar": "👉🏻",
+                "Paz": "✌🏻",
+                "Cuernos": "🤘🏻",
+                "Llamame": "🤙🏻",
+                "Pulgar abajo": "👎🏻",
+                "Ok": "👌🏻",
+                "Gesture extra 1": "☝🏻",
+                "Gesture extra 2": "🤞🏻",
+            }
             with open('config.json', 'r') as f:
                 config = json.load(f)
                 gestos_a_mostrar = random.sample(config["gestos"][1:-2], min(3, len(config["gestos"])))
-                for gesto in gestos_a_mostrar:
+                for i, gesto in enumerate(gestos_a_mostrar):
                     nombre_gesto = gesto["nombre"]
                     descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
-                    label_gesto = QLabel(f"▪ {nombre_gesto.replace('_', ' ').title()}\n    > {descripcion_gesto}")
+                    label_gesto = QLabel(f"▪ {emojis[nombre_gesto]} {nombre_gesto.replace('_', ' ').title()}\n    > {descripcion_gesto}")
                     label_gesto.setStyleSheet("color: #333333; font-size: 16px;")
                     label_gesto.setWordWrap(True)
                     self.layout_gestos.addWidget(label_gesto)

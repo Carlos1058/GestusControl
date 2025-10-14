@@ -95,7 +95,7 @@ class DialogoModificar(QDialog):
         # --- Lógica de datos ---
         self.config_modificada = config_actual["gestos"].copy()
         self.acciones_disponibles = [accion["nombre"] for accion in config_actual["acciones"][1:]]
-        
+
         # --- Layout principal ---
         layout = QVBoxLayout(self)
         layout.setSpacing(12)
@@ -126,7 +126,7 @@ class DialogoModificar(QDialog):
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
-        
+
         # --- Inicialización de datos ---
         self.cargar_datos_iniciales()
         self.combo_gestos.currentIndexChanged.connect(self.actualizar_combo_acciones)
@@ -135,7 +135,19 @@ class DialogoModificar(QDialog):
     # --- Métodos funcionales ---
     def cargar_datos_iniciales(self):
         """Puebla los ComboBox con los datos iniciales del config."""
-        gestos_editables = [gesto["nombre"] for gesto in self.config_modificada[1:]]
+        emojis = {
+            "Mano abierta": "✋🏻",
+            "Puno cerrado": "✊🏻",
+            "Apuntar": "👉🏻",
+            "Paz": "✌🏻",
+            "Cuernos": "🤘🏻",
+            "Llamame": "🤙🏻",
+            "Pulgar abajo": "👎🏻",
+            "Ok": "👌🏻",
+            "Gesto extra 1": "☝🏻",
+            "Gesto extra 2": "🤞🏻",
+        }
+        gestos_editables = [f'{emojis[gesto["nombre"]]} {gesto["nombre"]}' for gesto in self.config_modificada[1:]]
         self.combo_gestos.addItems(gestos_editables)
         self.combo_acciones.addItems(self.acciones_disponibles)
         self.actualizar_combo_acciones()
@@ -153,8 +165,7 @@ class DialogoModificar(QDialog):
         accion_seleccionada = next((i + 1 for i, accion in enumerate(self.acciones_disponibles) if accion == self.combo_acciones.currentText()), None)
         if gesto_seleccionado and accion_seleccionada:
             gesto_seleccionado['accion'] = accion_seleccionada
-    
+
     def obtener_config_actualizada(self):
         """Método para que la ventana principal obtenga la configuración final."""
         return self.config_modificada
-    
