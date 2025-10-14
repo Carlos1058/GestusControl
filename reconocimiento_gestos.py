@@ -31,41 +31,41 @@ def identificar_gestos(mano_landmarks):
 
     # Gesto LIKE (Pulgar arriba, resto cerrado)
     if pulgar_arriba and indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado:
-        return "LIKE"
+        return "Like"
 
     # Gesto MANO_ABIERTA (Todos los dedos estirados)
     if indice_estirado and medio_estirado and anular_estirado and menique_estirado and pulgar_afuera:
-        return "MANO_ABIERTA"
+        return "Mano abierta"
 
     # Gesto PUNO_CERRADO (Todos los dedos cerrados)
     if indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:
-        return "PUNO_CERRADO"
+        return "Puno cerrado"
         
     # Gesto APUNTAR (Índice estirado, resto cerrado)
     if indice_estirado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:
-        return "APUNTAR"
+        return "Apuntar"
 
     # Gesto PAZ (Índice y medio estirados, resto cerrado)
     if indice_estirado and medio_estirado and anular_cerrado and menique_cerrado:
-        return "PAZ"
+        return "Paz"
 
     # Gesto CUERNOS (Índice y meñique estirados, resto cerrado)
     if indice_estirado and menique_estirado and medio_cerrado and anular_cerrado:
-        return "CUERNOS"
+        return "Cuernos"
 
     # Gesto LLAMAME (Pulgar y meñique estirados, resto cerrado)
     if pulgar_afuera and menique_estirado and indice_cerrado and medio_cerrado and anular_cerrado:
-        return "LLAMAME"
+        return "Llamame"
 
     # Gesto PULGAR_ABAJO (Pulgar abajo, resto cerrado)
     if pulgar_abajo and indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado:
-        return "PULGAR_ABAJO"
+        return "Pulgar abajo"
 
     # Gesto OK (Punta del índice y pulgar se tocan, resto estirado)
     # (Calculamos la distancia entre las puntas de los dedos)
     distancia_ok = ((puntos[8].x - puntos[4].x)**2 + (puntos[8].y - puntos[4].y)**2)**0.5
     if distancia_ok < 0.05 and medio_estirado and anular_estirado and menique_estirado:
-        return "OK"
+        return "Ok"
 
     # Si no se cumple ninguna condición
-    return "DESCONOCIDO"
+    return "Desconocido"

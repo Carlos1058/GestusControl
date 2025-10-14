@@ -8,7 +8,7 @@ from PyQt6.QtGui import QColor
 
 
 class DialogoModificar(QDialog):
-    def __init__(self, config_actual, acciones_disponibles, parent=None):
+    def __init__(self, config_actual, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Modificar Asignación de Gestos")
         self.setMinimumSize(460, 230)
@@ -93,8 +93,8 @@ class DialogoModificar(QDialog):
         self.setGraphicsEffect(sombra)
 
         # --- Lógica de datos ---
-        self.config_modificada = config_actual.copy()
-        self.acciones_disponibles = acciones_disponibles
+        self.config_modificada = config_actual["gestos"].copy()
+        self.acciones_disponibles = [accion["nombre"] for accion in config_actual["acciones"][1:]]
         
         # --- Layout principal ---
         layout = QVBoxLayout(self)
@@ -135,27 +135,24 @@ class DialogoModificar(QDialog):
     # --- Métodos funcionales ---
     def cargar_datos_iniciales(self):
         """Puebla los ComboBox con los datos iniciales del config."""
-        gestos_editables = [
-            g for g in self.config_modificada
-            if self.config_modificada[g]['accion'] != 'confirmacion'
-        ]
+        gestos_editables = [gesto["nombre"] for gesto in self.config_modificada[1:]]
         self.combo_gestos.addItems(gestos_editables)
         self.combo_acciones.addItems(self.acciones_disponibles)
         self.actualizar_combo_acciones()
 
     def actualizar_combo_acciones(self):
         """Al cambiar de gesto, muestra la acción que tiene asignada actualmente."""
-        gesto_seleccionado = self.combo_gestos.currentText()
+        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == self.combo_gestos.currentText()), None)
         if gesto_seleccionado:
-            accion_actual = self.config_modificada[gesto_seleccionado]['accion']
+            accion_actual = self.acciones_disponibles[gesto_seleccionado["accion"] - 1]
             self.combo_acciones.setCurrentText(accion_actual)
 
     def registrar_cambio_accion(self):
         """Actualiza el diccionario en memoria cuando el usuario cambia una acción."""
-        gesto_seleccionado = self.combo_gestos.currentText()
-        accion_seleccionada = self.combo_acciones.currentText()
+        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == self.combo_gestos.currentText()), None)
+        accion_seleccionada = next((i + 1 for i, accion in enumerate(self.acciones_disponibles) if accion == self.combo_acciones.currentText()), None)
         if gesto_seleccionado and accion_seleccionada:
-            self.config_modificada[gesto_seleccionado]['accion'] = accion_seleccionada
+            gesto_seleccionado['accion'] = accion_seleccionada
     
     def obtener_config_actualizada(self):
         """Método para que la ventana principal obtenga la configuración final."""

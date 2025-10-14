@@ -1,46 +1,94 @@
 {
-  "LIKE": {
-    "accion": "confirmacion",
-    "descripcion": "Confirma la ejecucion de una accion."
-  },
-  "MANO_ABIERTA": {
-    "accion": "abrir_menu_inicio",
-    "descripcion": "Abre el menu de inicio (Tecla Windows)."
-  },
-  "PUNO_CERRADO": {
-    "accion": "silenciar_volumen",
-    "descripcion": "Silencia o activa el sonido del sistema."
-  },
-  "APUNTAR": {
-    "accion": "abrir_youtube",
-    "descripcion": "Abre YouTube en el navegador."
-  },
-  "PAZ": {
-    "accion": "subir_volumen",
-    "descripcion": "Sube el volumen del sistema."
-  },
-  "CUERNOS": {
-    "accion": "activar_cortana",
-    "descripcion": "Activa Cortana o Copilot (Win+C)."
-  },
-  "LLAMAME": {
-    "accion": "abrir_wikipedia",
-    "descripcion": "Abre Wikipedia en el navegador."
-  },
-  "PULGAR_ABAJO": {
-    "accion": "bajar_volumen",
-    "descripcion": "Baja el volumen del sistema."
-  },
-  "OK": {
-    "accion": "abrir_calculadora",
-    "descripcion": "Abre la calculadora del sistema."
-  },
-  "GESTO_EXTRA_1": {
-    "accion": "subir_brillo",
-    "descripcion": "Sube el brillo de la pantalla."
-  },
-  "GESTO_EXTRA_2": {
-    "accion": "bajar_brillo",
-    "descripcion": "Baja el brillo de la pantalla."
-  }
+  "acciones": [
+    {
+      "nombre": "Confirmar",
+      "descripcion": "Confirma la ejecucion de una accion."
+    },
+    {
+      "nombre": "Abrir YouTube",
+      "descripcion": "Abre YouTube en el navegador."
+    },
+    {
+      "nombre": "Abrir calculadora",
+      "descripcion": "Abre la calculadora del sistema."
+    },
+    {
+      "nombre": "Abrir Wikipedia",
+      "descripcion": "Abre Wikipedia en el navegador."
+    },
+    {
+      "nombre": "Abrir menu de inicio",
+      "descripcion": "Abre el menu de inicio (Tecla Windows)."
+    },
+    {
+      "nombre": "Activar Cortana",
+      "descripcion": "Activa Cortana o Copilot (Win+C)."
+    },
+    {
+      "nombre": "Subir brillo",
+      "descripcion": "Sube el brillo de la pantalla principal en 20 puntos."
+    },
+    {
+      "nombre": "Bajar brillo",
+      "descripcion": "Baja el brillo de la pantalla principal en 20 puntos."
+    },
+    {
+      "nombre": "Subir volumen",
+      "descripcion": "Sube el volumen del sistema."
+    },
+    {
+      "nombre": "Bajar volumen",
+      "descripcion": "Baja el volumen del sistema."
+    },
+    {
+      "nombre": "Silenciar volumen",
+      "descripcion": "Silencia o activa el sonido del sistema."
+    }
+  ],
+  "gestos": [
+    {
+      "nombre": "Like",
+      "accion": 0
+    },
+    {
+      "nombre": "Mano abierta",
+      "accion": 4
+    },
+    {
+      "nombre": "Puno cerrado",
+      "accion": 1
+    },
+    {
+      "nombre": "Apuntar",
+      "accion": 10
+    },
+    {
+      "nombre": "Paz",
+      "accion": 10
+    },
+    {
+      "nombre": "Cuernos",
+      "accion": 5
+    },
+    {
+      "nombre": "Llamame",
+      "accion": 1
+    },
+    {
+      "nombre": "Pulgar abajo",
+      "accion": 2
+    },
+    {
+      "nombre": "Ok",
+      "accion": 8
+    },
+    {
+      "nombre": "nombre extra 1",
+      "accion": 6
+    },
+    {
+      "nombre": "nombre extra 2",
+      "accion": 7
+    }
+  ]
 }

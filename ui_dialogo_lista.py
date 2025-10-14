@@ -8,7 +8,7 @@ from PyQt6.QtGui import QColor
 
 
 class DialogoListaGestos(QDialog):
-    def __init__(self, config_gestos, parent=None):
+    def __init__(self, gestos, acciones, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Lista Completa de Gestos")
         self.setMinimumSize(520, 620)
@@ -78,23 +78,20 @@ class DialogoListaGestos(QDialog):
         layout_gestos.setContentsMargins(5, 5, 5, 5)
 
         # --- Crea una tarjeta por cada gesto ---
-        for nombre_gesto, datos in config_gestos.items():
-            nombre_limpio = nombre_gesto.replace('_', ' ').title()
-            accion_limpia = datos['accion'].replace('_', ' ')
-            descripcion = datos['descripcion']
+        for gesto in gestos:
 
             tarjeta = QFrame()
             tarjeta_layout = QVBoxLayout(tarjeta)
             tarjeta_layout.setContentsMargins(12, 10, 12, 10)
             tarjeta_layout.setSpacing(4)
 
-            label_titulo = QLabel(f"<b>{nombre_limpio}</b>")
+            label_titulo = QLabel(f"<b>{gesto["nombre"]}</b>")
             label_titulo.setStyleSheet("font-size: 16px; color: #1B5E20;")
 
-            label_accion = QLabel(f"Acción: <i>{accion_limpia}</i>")
+            label_accion = QLabel(f"Acción: <i>{acciones[gesto['accion']]["nombre"]}</i>")
             label_accion.setStyleSheet("font-size: 14px; color: #000000;")
 
-            label_desc = QLabel(f"{descripcion}")
+            label_desc = QLabel(f"{acciones[gesto['accion']]["descripcion"]}")
             label_desc.setWordWrap(True)
             label_desc.setStyleSheet("font-size: 13px; color: #000000;")
 

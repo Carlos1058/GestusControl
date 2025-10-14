@@ -160,27 +160,25 @@ class VentanaPrincipal(QMainWindow):
 
         try:
             with open('config.json', 'r') as f:
-                config_gestos = json.load(f)
-
-            gestos_validos = ((nombre, datos) for nombre, datos in config_gestos.items() if datos['accion'] != 'confirmacion')
-            gestos_validos_list = list(gestos_validos)
-            gestos_a_mostrar = random.sample(gestos_validos_list, min(3, len(gestos_validos_list)))
-
-            for nombre_gesto, datos in gestos_a_mostrar:
-                texto_gesto = f"▪ {nombre_gesto.replace('_', ' ').title()}"
-                desc_gesto = f"    > {datos['descripcion']}"
-                label_gesto = QLabel(f"{texto_gesto}\n{desc_gesto}")
-                label_gesto.setStyleSheet("color: #333333; font-size: 16px;")
-                label_gesto.setWordWrap(True)
-                self.layout_gestos.addWidget(label_gesto)
+                config = json.load(f)
+                gestos_a_mostrar = random.sample(config["gestos"][1:], min(3, len(config["gestos"])))
+                for gesto in gestos_a_mostrar:
+                    nombre_gesto = gesto["nombre"]
+                    descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
+                    label_gesto = QLabel(f"▪ {nombre_gesto.replace('_', ' ').title()}\n    > {descripcion_gesto}")
+                    label_gesto.setStyleSheet("color: #333333; font-size: 16px;")
+                    label_gesto.setWordWrap(True)
+                    self.layout_gestos.addWidget(label_gesto)
         except Exception as e:
             self.layout_gestos.addWidget(QLabel(f"Error: {e}"))
 
     def abrir_dialogo_lista(self):
         try:
             with open('config.json', 'r') as f:
-                config_gestos = json.load(f)
-            dialogo = DialogoListaGestos(config_gestos, self)
+                config = json.load(f)
+                gestos = config["gestos"]
+                acciones = config["acciones"]
+            dialogo = DialogoListaGestos(gestos, acciones, self)
             dialogo.exec()
         except Exception as e:
             print(f"Error al abrir la lista de gestos: {e}")
@@ -188,14 +186,14 @@ class VentanaPrincipal(QMainWindow):
     def abrir_dialogo_modificar(self):
         try:
             with open('config.json', 'r') as f:
-                config_gestos = json.load(f)
+                config = json.load(f)
 
-            acciones = list(ac.MAPA_ACCIONES.keys())
-            dialogo = DialogoModificar(config_gestos, acciones, self)
+            #!acciones = list(ac.MAPA_ACCIONES.keys())
+            dialogo = DialogoModificar(config, self)
             if dialogo.exec():
-                nueva_config = dialogo.obtener_config_actualizada()
+                config["gestos"] = dialogo.obtener_config_actualizada()
                 with open('config.json', 'w') as f:
-                    json.dump(nueva_config, f, indent=2)
+                    json.dump(config, f, indent=2)
                 self.refrescar_panel_gestos()
         except Exception as e:
             print(f"Error al abrir el diálogo de modificación: {e}")

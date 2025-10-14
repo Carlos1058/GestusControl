@@ -77,14 +77,14 @@ def silenciar_volumen():
 # Este diccionario conecta los strings del JSON con las funciones reales.
 
 MAPA_ACCIONES = {
-    "abrir_youtube": abrir_youtube,
-    "abrir_calculadora": abrir_calculadora,
-    "abrir_wikipedia": abrir_wikipedia,
-    "abrir_menu_inicio": abrir_menu_inicio,
-    "activar_cortana": activar_cortana,
-    "subir_brillo": subir_brillo,
-    "bajar_brillo": bajar_brillo,
-    "subir_volumen": subir_volumen,
-    "bajar_volumen": bajar_volumen,
-    "silenciar_volumen": silenciar_volumen,
+    "Abrir YouTube": abrir_youtube,
+    "Abrir calculadora": abrir_calculadora,
+    "Abrir Wikipedia": abrir_wikipedia,
+    "Abrir menu de inicio": abrir_menu_inicio,
+    "Activar Cortana": activar_cortana,
+    "Subir brillo": subir_brillo,
+    "Bajar brillo": bajar_brillo,
+    "Subir volumen": subir_volumen,
+    "Bajar volumen": bajar_volumen,
+    "Silenciar volumen": silenciar_volumen,
 }

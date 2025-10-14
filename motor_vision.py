@@ -12,12 +12,12 @@ class MotorVision(QThread):
         try:
             with open('config.json', 'r') as f:
                 self.config_gestos = json.load(f)
-        except Exception as e:
-            self.config_gestos = {}
+        except Exception:
+            self.config_gestos = {"acciones": [], "gestos": []}
         self.mp_manos = mp.solutions.hands
         self.manos = self.mp_manos.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.5)
         self.mp_dibujo = mp.solutions.drawing_utils
-        self.estado_actual = "ESPERANDO_GESTO"
+        self.estado_actual = "Esperando gesto"
         self.gesto_anterior = ""
         self.tiempo_inicio_gesto = 0
         self.gesto_confirmado = ""
@@ -38,7 +38,7 @@ class MotorVision(QThread):
             frame = cv2.flip(frame, 1)
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             resultados = self.manos.process(frame_rgb)
-            gesto_actual = "DESCONOCIDO"
+            gesto_actual = "Desconocido"
             texto_feedback = ""
             
             if resultados.multi_hand_landmarks:
@@ -49,28 +49,30 @@ class MotorVision(QThread):
                         self.gesto_anterior = gesto_actual
                         self.tiempo_inicio_gesto = time.time()
                         self.gesto_confirmado = ""
-                    elif gesto_actual != "DESCONOCIDO":
+                    elif gesto_actual != "Desconocido":
                         if (time.time() - self.tiempo_inicio_gesto) >= self.TIEMPO_PARA_CONFIRMAR:
                             self.gesto_confirmado = gesto_actual
             
-            if self.estado_actual == "ESPERANDO_GESTO":
+            if self.estado_actual == "Esperando gesto":
                 texto_feedback = "Muestre un gesto para iniciar."
-                if self.gesto_confirmado and self.gesto_confirmado in self.config_gestos:
-                    nombre_accion = self.config_gestos[self.gesto_confirmado]['accion']
-                    if nombre_accion != "confirmacion" and nombre_accion in ac.MAPA_ACCIONES:
+                if self.gesto_confirmado and self.gesto_confirmado in {gesto["nombre"] for gesto in self.config_gestos["gestos"]}:
+                    id_accion = next((gesto["accion"] for gesto in self.config_gestos["gestos"] if gesto["nombre"] == self.gesto_confirmado), None)
+                    nombre_accion = self.config_gestos["acciones"][id_accion]["nombre"]
+                    if nombre_accion != "Confirmar" and nombre_accion in ac.MAPA_ACCIONES:
                         self.accion_pendiente = ac.MAPA_ACCIONES[nombre_accion]
-                        self.estado_actual = "ESPERANDO_CONFIRMACION"
+                        self.estado_actual = "Esperando confirmación"
                         self.tiempo_inicio_confirmacion = time.time()
                         self.gesto_confirmado, self.gesto_anterior = "", ""
             
-            elif self.estado_actual == "ESPERANDO_CONFIRMACION":
-                nombre_accion = self.accion_pendiente.__name__ if self.accion_pendiente else ""
-                texto_feedback = f"Accion: {nombre_accion}. Confirme con LIKE."
+            elif self.estado_actual == "Esperando confirmación":
+                if not self.accion_pendiente:
+                    nombre_accion = ""
+                texto_feedback = f"Accion: {nombre_accion}. Confirme con Like."
                 if time.time() - self.tiempo_inicio_confirmacion > self.TIEMPO_LIMITE_CONFIRMACION:
-                    self.estado_actual, self.accion_pendiente = "ESPERANDO_GESTO", None
-                if self.gesto_confirmado == "LIKE":
+                    self.estado_actual, self.accion_pendiente = "Esperando gesto", None
+                if self.gesto_confirmado == "Like":
                     if self.accion_pendiente: self.accion_pendiente()
-                    self.estado_actual, self.accion_pendiente = "ESPERANDO_GESTO", None
+                    self.estado_actual, self.accion_pendiente = "Esperando gesto", None
                     self.gesto_confirmado, self.gesto_anterior = "", ""
 
             self.cambio_de_frame.emit(frame)
