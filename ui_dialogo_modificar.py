@@ -135,19 +135,7 @@ class DialogoModificar(QDialog):
     # --- Métodos funcionales ---
     def cargar_datos_iniciales(self):
         """Puebla los ComboBox con los datos iniciales del config."""
-        emojis = {
-            "Mano abierta": "✋🏻",
-            "Puno cerrado": "✊🏻",
-            "Apuntar": "👉🏻",
-            "Paz": "✌🏻",
-            "Cuernos": "🤘🏻",
-            "Llamame": "🤙🏻",
-            "Pulgar abajo": "👎🏻",
-            "Ok": "👌🏻",
-            "Gesto extra 1": "☝🏻",
-            "Gesto extra 2": "🤞🏻",
-        }
-        gestos_editables = [f'{emojis[gesto["nombre"]]} {gesto["nombre"]}' for gesto in self.config_modificada[1:]]
+        gestos_editables = [f'{gesto["emoji"]} {gesto["nombre"]}' for gesto in self.config_modificada[1:]]
         self.combo_gestos.addItems(gestos_editables)
         self.combo_acciones.addItems(self.acciones_disponibles)
         self.actualizar_combo_acciones()

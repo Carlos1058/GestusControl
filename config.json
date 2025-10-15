@@ -48,46 +48,57 @@
   "gestos": [
     {
       "nombre": "Like",
+      "emoji": "👍🏻",
       "accion": 0
     },
     {
       "nombre": "Mano abierta",
+      "emoji": "🖐🏻",
       "accion": 4
     },
     {
       "nombre": "Puno cerrado",
+      "emoji": "✊🏻",
       "accion": 1
     },
     {
       "nombre": "Apuntar",
+      "emoji": "👉🏻",
       "accion": 10
     },
     {
       "nombre": "Paz",
+      "emoji": "✌🏻",
       "accion": 10
     },
     {
       "nombre": "Cuernos",
+      "emoji": "🤘🏻",
       "accion": 5
     },
     {
       "nombre": "Llamame",
+      "emoji": "🤙🏻",
       "accion": 1
     },
     {
       "nombre": "Pulgar abajo",
+      "emoji": "👎🏻",
       "accion": 2
     },
     {
       "nombre": "Ok",
+      "emoji": "👌🏻",
       "accion": 8
     },
     {
       "nombre": "Gesto extra 1",
+      "emoji": "🤞🏻",
       "accion": 6
     },
     {
       "nombre": "Gesto extra 2",
+      "emoji": "☝🏻",
       "accion": 7
     }
   ]
