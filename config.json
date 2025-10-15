@@ -54,22 +54,22 @@
     {
       "nombre": "Mano abierta",
       "emoji": "🖐🏻",
-      "accion": 4
+      "accion": 1
     },
     {
       "nombre": "Puno cerrado",
       "emoji": "✊🏻",
-      "accion": 1
+      "accion": 2
     },
     {
       "nombre": "Apuntar",
       "emoji": "👉🏻",
-      "accion": 10
+      "accion": 3
     },
     {
       "nombre": "Paz",
       "emoji": "✌🏻",
-      "accion": 10
+      "accion": 4
     },
     {
       "nombre": "Cuernos",
@@ -79,12 +79,12 @@
     {
       "nombre": "Llamame",
       "emoji": "🤙🏻",
-      "accion": 1
+      "accion": 6
     },
     {
       "nombre": "Pulgar abajo",
       "emoji": "👎🏻",
-      "accion": 2
+      "accion": 7
     },
     {
       "nombre": "Ok",
@@ -94,12 +94,12 @@
     {
       "nombre": "Gesto extra 1",
       "emoji": "🤞🏻",
-      "accion": 6
+      "accion": 9
     },
     {
       "nombre": "Gesto extra 2",
       "emoji": "☝🏻",
-      "accion": 7
+      "accion": 10
     }
   ]
 }

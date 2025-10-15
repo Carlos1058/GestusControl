@@ -142,14 +142,16 @@ class DialogoModificar(QDialog):
 
     def actualizar_combo_acciones(self):
         """Al cambiar de gesto, muestra la acción que tiene asignada actualmente."""
-        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == self.combo_gestos.currentText()), None)
+        nombre_gesto = self.combo_gestos.currentText().split(" ", 1)[1]
+        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == nombre_gesto), None)
         if gesto_seleccionado:
             accion_actual = self.acciones_disponibles[gesto_seleccionado["accion"] - 1]
             self.combo_acciones.setCurrentText(accion_actual)
 
     def registrar_cambio_accion(self):
         """Actualiza el diccionario en memoria cuando el usuario cambia una acción."""
-        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == self.combo_gestos.currentText()), None)
+        nombre_gesto = self.combo_gestos.currentText().split(" ", 1)[1]
+        gesto_seleccionado = next((gesto for gesto in self.config_modificada if gesto["nombre"] == nombre_gesto), None)
         accion_seleccionada = next((i + 1 for i, accion in enumerate(self.acciones_disponibles) if accion == self.combo_acciones.currentText()), None)
         if gesto_seleccionado and accion_seleccionada:
             gesto_seleccionado['accion'] = accion_seleccionada

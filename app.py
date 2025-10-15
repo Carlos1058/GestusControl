@@ -193,8 +193,8 @@ class VentanaPrincipal(QMainWindow):
             dialogo = DialogoModificar(config, self)
             if dialogo.exec():
                 config["gestos"] = dialogo.obtener_config_actualizada()
-                with open('config.json', 'w') as f:
-                    json.dump(config, f, indent=2)
+                with open("config.json", "w", encoding="utf-8") as f:
+                    json.dump(config, f, indent=2, ensure_ascii=False)
                 self.refrescar_panel_gestos()
         except Exception as e:
             print(f"Error al abrir el diálogo de modificación: {e}")
