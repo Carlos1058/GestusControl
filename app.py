@@ -35,7 +35,7 @@ class VentanaPrincipal(QMainWindow):
 
         # --- Panel derecho ---
         panel_derecho = QWidget()
-        panel_derecho.setStyleSheet("background-color: #F0F0F0; padding: 10px 15px;")
+        panel_derecho.setStyleSheet("background-color: #F0F0F0; padding: 5px 5px;")
         self.layout_derecho = QVBoxLayout(panel_derecho)
         self.layout_derecho.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.layout_derecho.setSpacing(10)
@@ -63,7 +63,7 @@ class VentanaPrincipal(QMainWindow):
         self.info_gesto_detectado = QLabel()
         self.info_feedback = QLabel()
         for label in [self.info_estado, self.info_gesto_detectado, self.info_feedback]:
-            label.setStyleSheet("color: #333333; font-size: 14px;")
+            label.setStyleSheet("color: #333333; font-size: 17px;")
             label.setWordWrap(True)
             self.layout_derecho.addWidget(label)
 
@@ -73,8 +73,8 @@ class VentanaPrincipal(QMainWindow):
         self.boton_inicio = QPushButton("Iniciar")
         self.boton_inicio.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50; color: white; font-size: 16px;
-                padding: 12px; border-radius: 5px; border: none;
+                background-color: #4CAF50; color: white; font-size: 18px;
+                font-weight: bold; padding: 12px; border-radius: 5px; border: none;
             }
             QPushButton:hover { background-color: #45A049; }
         """)
@@ -89,7 +89,7 @@ class VentanaPrincipal(QMainWindow):
         for boton in [boton_ver_todos, boton_modificar]:
             boton.setStyleSheet("""
                 QPushButton {
-                    background-color: #E1E1E1; color: #000000; font-size: 14px;
+                    background-color: #E1E1E1; color: #000000; font-size: 15px;
                     padding: 10px; border-radius: 5px; border: 1px solid #CCCCCC;
                 }
                 QPushButton:hover { background-color: #D1D1D1; }
@@ -120,11 +120,12 @@ class VentanaPrincipal(QMainWindow):
             self.boton_inicio.setText("Finalizar")
             self.boton_inicio.setStyleSheet("""
                 QPushButton {
-                    background-color: #E53935; color: white; font-size: 16px;
-                    padding: 12px; border-radius: 5px; border: none;
+                    background-color: #E53935; color: white; font-size: 18px;
+                    font-weight: bold; padding: 12px; border-radius: 5px; border: none;
                 }
                 QPushButton:hover { background-color: #C62828; }
-            """)
+            """
+            )
             self.etiqueta_video.setText("Iniciando cámara...")
 
             self.refrescar_panel_gestos()
@@ -146,7 +147,7 @@ class VentanaPrincipal(QMainWindow):
             self.boton_inicio.setStyleSheet("""
                 QPushButton {
                     background-color: #4CAF50; color: white; font-size: 16px;
-                    padding: 12px; border-radius: 5px; border: none;
+                    font-weight: bold; padding: 12px; border-radius: 5px; border: none;
                 }
                 QPushButton:hover { background-color: #45A049; }
             """)
@@ -166,8 +167,8 @@ class VentanaPrincipal(QMainWindow):
                 for gesto in gestos_a_mostrar:
                     nombre_gesto = gesto["nombre"]
                     descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
-                    label_gesto = QLabel(f"▪ {gesto.get('emoji', '')} {nombre_gesto.replace('_', ' ').title()}\n    > {descripcion_gesto}")
-                    label_gesto.setStyleSheet("color: #333333; font-size: 16px;")
+                    label_gesto = QLabel(f"▪ {gesto.get('emoji', '')} {nombre_gesto}\n    > {descripcion_gesto}")
+                    label_gesto.setStyleSheet("color: #333333; font-size: 18px;")
                     label_gesto.setWordWrap(True)
                     self.layout_gestos.addWidget(label_gesto)
         except Exception as e:
@@ -217,7 +218,7 @@ class VentanaPrincipal(QMainWindow):
         )
         self.etiqueta_video.setPixmap(pixmap_escalado)
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         if self.hilo_vision:
             self.hilo_vision.stop()
         event.accept()

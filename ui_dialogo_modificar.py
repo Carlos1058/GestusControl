@@ -11,7 +11,7 @@ class DialogoModificar(QDialog):
     def __init__(self, config_actual, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Modificar Asignación de Gestos")
-        self.setMinimumSize(460, 230)
+        self.setMinimumSize(500, 250)
         self.setStyleSheet("""
             QDialog { 
                 background-color: #FFFFFF;
@@ -19,7 +19,7 @@ class DialogoModificar(QDialog):
             }
 
             QLabel {
-                font-size: 15px;
+                font-size: 18px;
                 color: #222222;
                 font-weight: 500;
                 margin-bottom: 6px;
@@ -27,8 +27,8 @@ class DialogoModificar(QDialog):
 
             /* ComboBox */
             QComboBox {
-                font-size: 14px;
-                padding: 6px 8px;
+                font-size: 17px;
+                padding: 3px 4px;
                 color: #202020;
                 background-color: #FAFAFA;
                 border: 1px solid #CCCCCC;
@@ -56,8 +56,8 @@ class DialogoModificar(QDialog):
 
             /* Botones */
             QPushButton {
-                font-size: 14px;
-                padding: 8px 15px;
+                font-size: 20px;
+                padding: 4px 8px;
                 border-radius: 6px;
                 border: 1px solid transparent;
                 font-weight: 500;
@@ -103,7 +103,7 @@ class DialogoModificar(QDialog):
 
         # Texto superior
         info_label = QLabel("Seleccione un gesto y asigne la acción correspondiente:")
-        info_label.setStyleSheet("font-weight: bold; font-size: 15px; color: #333333;")
+        info_label.setStyleSheet("font-weight: bold; font-size: 18px; color: #333333;")
         layout.addWidget(info_label)
 
         # ComboBox de gestos
@@ -122,6 +122,8 @@ class DialogoModificar(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
+        button_box.button(QDialogButtonBox.StandardButton.Save).setText("Guardar")
+        button_box.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
         button_box.button(QDialogButtonBox.StandardButton.Save).setDefault(True)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)

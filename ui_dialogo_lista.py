@@ -40,11 +40,12 @@ class DialogoListaGestos(QDialog):
             QPushButton {
                 background-color: #4CAF50;
                 color: #FFFFFF;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 500;
                 padding: 10px 20px;
                 border-radius: 6px;
                 border: none;
+                font-weight: bold;
             }
             QPushButton:hover {
                 background-color: #45A049;
@@ -63,7 +64,7 @@ class DialogoListaGestos(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         titulo = QLabel("Lista completa de gestos y sus acciones")
-        titulo.setStyleSheet("font-size: 17px; font-weight: bold; margin-bottom: 10px;")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(titulo)
 
         # Área de scroll
@@ -86,14 +87,14 @@ class DialogoListaGestos(QDialog):
             tarjeta_layout.setSpacing(4)
 
             label_titulo = QLabel(f"<b>{gesto.get('emoji', '')} {gesto['nombre'].replace('_', ' ').title()}</b>")
-            label_titulo.setStyleSheet("font-size: 16px; color: #1B5E20;")
+            label_titulo.setStyleSheet("font-size: 18px; color: #1B5E20;")
 
             label_accion = QLabel(f"Acción: <i>{acciones[gesto['accion']]['nombre']}</i>")
-            label_accion.setStyleSheet("font-size: 14px; color: #000000;")
+            label_accion.setStyleSheet("font-size: 17px; color: #000000;")
             label_desc = QLabel(f"{acciones[gesto['accion']]['descripcion']}")
 
             label_desc.setWordWrap(True)
-            label_desc.setStyleSheet("font-size: 13px; color: #000000;")
+            label_desc.setStyleSheet("font-size: 17px; color: #000000;")
 
             tarjeta_layout.addWidget(label_titulo)
             tarjeta_layout.addWidget(label_accion)

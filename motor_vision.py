@@ -10,7 +10,7 @@ class MotorVision(QThread):
         super().__init__(parent)
         self.running = True
         try:
-            with open('config.json', 'r') as f:
+            with open('config.json', 'r', encoding='utf-8') as f:
                 self.config_gestos = json.load(f)
         except Exception:
             self.config_gestos = {"acciones": [], "gestos": []}
