@@ -88,8 +88,10 @@ class VentanaPrincipal(QMainWindow):
         layout_botones = QHBoxLayout()
         boton_ver_todos = QPushButton("Ver Todos los Gestos")
         boton_modificar = QPushButton("Modificar Gestos")
+        self.boton_mouse = QPushButton("Activar Mouse")
+        self.boton_mouse.setCheckable(True)
 
-        for boton in [boton_ver_todos, boton_modificar]:
+        for boton in [boton_ver_todos, boton_modificar, self.boton_mouse]:
             # Estilo manejado por CSS global (QPushButton)
             boton.setCursor(Qt.CursorShape.PointingHandCursor)
             layout_botones.addWidget(boton)
@@ -98,6 +100,7 @@ class VentanaPrincipal(QMainWindow):
 
         boton_ver_todos.clicked.connect(self.abrir_dialogo_lista)
         boton_modificar.clicked.connect(self.abrir_dialogo_modificar)
+        self.boton_mouse.clicked.connect(self.toggle_mouse_mode)
 
         layout_principal.addWidget(panel_derecho, 1)
 
@@ -197,6 +200,22 @@ class VentanaPrincipal(QMainWindow):
                 self.refrescar_panel_gestos()
         except Exception as e:
             print(f"Error al abrir el diálogo de modificación: {e}")
+
+    def toggle_mouse_mode(self):
+        if self.hilo_vision and self.vision_activa:
+            modo_activo = self.hilo_vision.toggle_modo_mouse()
+            if modo_activo:
+                self.boton_mouse.setText("Desactivar Mouse")
+                self.boton_mouse.setStyleSheet("background-color: #00E5FF; color: #121212;")
+                self.overlay.set_estado("Modo Mouse")
+            else:
+                self.boton_mouse.setText("Activar Mouse")
+                self.boton_mouse.setStyleSheet("") # Restaurar estilo default
+                self.overlay.set_estado("Esperando")
+        else:
+            # Si la cámara no está activa, no permitir activar mouse (o activarla automáticamente)
+            self.boton_mouse.setChecked(False)
+            self.info_estado.setText("Error: Inicia la cámara primero")
 
     def actualizar_feedback_panel(self, estado, gesto, feedback):
         self.info_estado.setText(f"<b>Estado:</b> {estado}")
