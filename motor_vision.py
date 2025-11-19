@@ -175,6 +175,9 @@ class MotorVision(QThread):
                 # En modo mouse, siempre "confirmamos" visualmente que está activo
                 es_gesto_valido = True 
 
+            # --- DIBUJAR HUD CYBERPUNK ---
+            self.dibujar_hud(frame)
+
             self.cambio_de_frame.emit(frame)
             
             # Feedback de texto
@@ -202,6 +205,46 @@ class MotorVision(QThread):
             
             time.sleep(0.01)
         cap.release()
+
+    def dibujar_hud(self, frame):
+        """Dibuja elementos gráficos tácticos sobre el frame."""
+        h, w, _ = frame.shape
+        color_hud = (255, 229, 0) # Cyan en BGR (0, 229, 255)
+        
+        grosor = 2
+        longitud = 40
+
+        # 1. Esquinas (Brackets)
+        # Arriba-Izquierda
+        cv2.line(frame, (20, 20), (20 + longitud, 20), color_hud, grosor)
+        cv2.line(frame, (20, 20), (20, 20 + longitud), color_hud, grosor)
+        
+        # Arriba-Derecha
+        cv2.line(frame, (w - 20, 20), (w - 20 - longitud, 20), color_hud, grosor)
+        cv2.line(frame, (w - 20, 20), (w - 20, 20 + longitud), color_hud, grosor)
+        
+        # Abajo-Izquierda
+        cv2.line(frame, (20, h - 20), (20 + longitud, h - 20), color_hud, grosor)
+        cv2.line(frame, (20, h - 20), (20, h - 20 - longitud), color_hud, grosor)
+        
+        # Abajo-Derecha
+        cv2.line(frame, (w - 20, h - 20), (w - 20 - longitud, h - 20), color_hud, grosor)
+        cv2.line(frame, (w - 20, h - 20), (w - 20, h - 20 - longitud), color_hud, grosor)
+
+        # 2. Retícula Central
+        cx, cy = w // 2, h // 2
+        cv2.line(frame, (cx - 10, cy), (cx + 10, cy), color_hud, 1)
+        cv2.line(frame, (cx, cy - 10), (cx, cy + 10), color_hud, 1)
+        cv2.circle(frame, (cx, cy), 20, color_hud, 1)
+
+        # 3. Texto de Estado
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(frame, "SYS: ONLINE", (40, 50), font, 0.5, color_hud, 1, cv2.LINE_AA)
+        cv2.putText(frame, "CAM: ACTIVE", (40, 70), font, 0.5, color_hud, 1, cv2.LINE_AA)
+        
+        # Modo Mouse indicador en video
+        if self.modo_mouse:
+            cv2.putText(frame, "MOUSE MODE: ON", (w - 180, 50), font, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
 
     def ejecutar_accion(self, nombre_gesto):
         # Buscar ID de acción

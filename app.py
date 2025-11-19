@@ -1,6 +1,7 @@
 import sys
 import cv2
 import json
+import random
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QWidget, 
                              QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QSizePolicy)
 from PyQt6.QtGui import QImage, QPixmap
@@ -9,42 +10,111 @@ from motor_vision import MotorVision
 from ui_dialogo_modificar import DialogoModificar
 from ui_dialogo_lista import DialogoListaGestos
 import acciones as ac
-import random
 from overlay_visual import OverlayVisual
 from estilos import HOJA_ESTILO
 
-class VentanaPrincipal(QMainWindow):
+class BarraTitulo(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("BarraTitulo")
+        self.setFixedHeight(40)
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Título
+        self.titulo = QLabel("GESTUS CONTROL // CYBERPUNK_EDITION")
+        self.titulo.setObjectName("TituloApp")
+        layout.addWidget(self.titulo)
+        
+        layout.addStretch()
+        
+        # Botones
+        self.btn_min = QPushButton("_")
+        self.btn_min.setObjectName("BotonControl")
+        self.btn_min.setFixedSize(40, 40)
+        self.btn_min.clicked.connect(parent.showMinimized)
+        layout.addWidget(self.btn_min)
+        
+        self.btn_close = QPushButton("X")
+        self.btn_close.setObjectName("BotonControl")
+        self.btn_close.setObjectName("BotonCerrar") # ID específico para estilo rojo
+        self.btn_close.setFixedSize(40, 40)
+        self.btn_close.clicked.connect(parent.close)
+        layout.addWidget(self.btn_close)
+        
+        # Variables para mover ventana
+        self.start_pos = None
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.start_pos = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event):
+        if self.start_pos:
+            delta = event.globalPosition().toPoint() - self.start_pos
+            self.window().move(self.window().pos() + delta)
+            self.start_pos = event.globalPosition().toPoint()
+
+    def mouseReleaseEvent(self, event):
+        self.start_pos = None
+
+class GestusApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("GestusControl - Cyberpunk Edition")
-        self.setGeometry(100, 100, 1280, 720)
+        
+        # Configuración Frameless
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.resize(1100, 700)
+        
         self.setStyleSheet(HOJA_ESTILO)
 
-        self.vision_activa = False  # Estado de la cámara
-        self.hilo_vision = None     # Inicialmente no hay hilo
+        self.vision_activa = False
+        self.hilo_vision = None
         
-        # Inicializar Overlay (oculto al principio)
         self.overlay = OverlayVisual()
         self.overlay.hide()
 
-        widget_central = QWidget()
-        self.setCentralWidget(widget_central)
-        layout_principal = QHBoxLayout(widget_central)
-        layout_principal.setContentsMargins(0, 0, 0, 0)
-        layout_principal.setSpacing(0)
+        # Widget central principal (contenedor de todo)
+        self.widget_central = QWidget()
+        self.widget_central.setObjectName("FondoPrincipal") # Para aplicar borde/fondo
+        self.setCentralWidget(self.widget_central)
+        
+        # Layout Principal (Vertical: Barra Título + Contenido)
+        self.layout_principal = QVBoxLayout(self.widget_central)
+        self.layout_principal.setContentsMargins(0, 0, 0, 0)
+        self.layout_principal.setSpacing(0)
+        
+        # 1. Barra de Título
+        self.barra_titulo = BarraTitulo(self)
+        self.layout_principal.addWidget(self.barra_titulo)
+        
+        # 2. Contenido (Horizontal: Video + Panel)
+        self.contenido_layout = QHBoxLayout()
+        self.contenido_layout.setContentsMargins(20, 20, 20, 20)
+        self.contenido_layout.setSpacing(20)
+        self.layout_principal.addLayout(self.contenido_layout)
 
-        # --- Etiqueta de video ---
-        self.etiqueta_video = QLabel("Cámara no iniciada")
+        # --- Panel Izquierdo: Video ---
+        self.panel_video = QWidget()
+        self.layout_video = QVBoxLayout(self.panel_video)
+        self.layout_video.setContentsMargins(0, 0, 0, 0)
+        
+        self.etiqueta_video = QLabel("Cámara apagada")
         self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.etiqueta_video.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
-        # El estilo se define en estilos.py, pero mantenemos el fondo negro para el video
         self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
-        layout_principal.addWidget(self.etiqueta_video, 3)
+        self.layout_video.addWidget(self.etiqueta_video)
+        
+        self.contenido_layout.addWidget(self.panel_video, 65)
 
-        # --- Panel derecho ---
-        panel_derecho = QWidget()
-        panel_derecho.setObjectName("PanelDerecho") # Para aplicar estilo CSS
-        self.layout_derecho = QVBoxLayout(panel_derecho)
+        # --- Panel Derecho: Controles ---
+        self.panel_control = QWidget()
+        self.panel_control.setObjectName("PanelDerecho")
+        self.layout_derecho = QVBoxLayout(self.panel_control)
         self.layout_derecho.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.layout_derecho.setSpacing(10)
 
@@ -78,7 +148,7 @@ class VentanaPrincipal(QMainWindow):
         self.layout_derecho.addStretch(1)
 
         # --- Botón Iniciar/Finalizar ---
-        self.boton_inicio = QPushButton("Iniciar Sistema")
+        self.boton_inicio = QPushButton("📷  INICIAR SISTEMA")
         self.boton_inicio.setObjectName("BotonAccion")
         self.boton_inicio.setCursor(Qt.CursorShape.PointingHandCursor)
         self.boton_inicio.clicked.connect(self.toggle_camara)
@@ -86,13 +156,12 @@ class VentanaPrincipal(QMainWindow):
 
         # --- Botones secundarios ---
         layout_botones = QHBoxLayout()
-        boton_ver_todos = QPushButton("Ver Todos los Gestos")
-        boton_modificar = QPushButton("Modificar Gestos")
-        self.boton_mouse = QPushButton("Activar Mouse")
+        boton_ver_todos = QPushButton("👁️  VER GESTOS")
+        boton_modificar = QPushButton("⚙️  CONFIGURAR")
+        self.boton_mouse = QPushButton("🖱️  MOUSE")
         self.boton_mouse.setCheckable(True)
 
         for boton in [boton_ver_todos, boton_modificar, self.boton_mouse]:
-            # Estilo manejado por CSS global (QPushButton)
             boton.setCursor(Qt.CursorShape.PointingHandCursor)
             layout_botones.addWidget(boton)
 
@@ -102,13 +171,12 @@ class VentanaPrincipal(QMainWindow):
         boton_modificar.clicked.connect(self.abrir_dialogo_modificar)
         self.boton_mouse.clicked.connect(self.toggle_mouse_mode)
 
-        layout_principal.addWidget(panel_derecho, 1)
+        self.contenido_layout.addWidget(self.panel_control, 35)
 
     # =========================
     #  MÉTODOS DE FUNCIONALIDAD
     # =========================
     def toggle_camara(self):
-        """Activa o desactiva la cámara y actualiza el botón."""
         if not self.vision_activa:
             # Iniciar cámara
             self.hilo_vision = MotorVision()
@@ -121,17 +189,12 @@ class VentanaPrincipal(QMainWindow):
             self.hilo_vision.gesto_cancelado_signal.connect(lambda: self.overlay.set_estado("Cancelado"))
             
             self.hilo_vision.start()
-            self.overlay.showFullScreen() # Mostrar overlay al iniciar cámara
+            self.overlay.showFullScreen()
             self.vision_activa = True
 
-            # Cambiar estilo del botón
-            self.boton_inicio.setText("Finalizar Sistema")
-            # El color rojo/magenta se puede manejar dinámicamente o dejar que el estilo "BotonAccion" lo maneje.
-            # Para feedback visual de "Parar", podemos cambiar el estilo inline momentáneamente o confiar en el texto.
+            self.boton_inicio.setText("🛑  FINALIZAR SISTEMA")
             self.boton_inicio.setStyleSheet("background-color: #FF1744; color: white; border: none;") 
-            
             self.etiqueta_video.setText("Iniciando sensores...")
-
             self.refrescar_panel_gestos()
         else:
             # Detener cámara
@@ -139,19 +202,15 @@ class VentanaPrincipal(QMainWindow):
                 self.hilo_vision.stop()
                 self.hilo_vision = None
             self.vision_activa = False
-            self.overlay.hide() # Ocultar overlay
+            self.overlay.hide()
 
-            # Limpiar QLabel para que no quede la última imagen
             self.etiqueta_video.clear()
             self.etiqueta_video.setText("Sistema en espera.")
             self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            # Restaurar borde neon
             self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
 
-            # Restaurar botón
-            self.boton_inicio.setText("Iniciar Sistema")
-            self.boton_inicio.setStyleSheet("") # Restaurar al estilo de la hoja de estilos (ID BotonAccion)
-            
+            self.boton_inicio.setText("📷  INICIAR SISTEMA")
+            self.boton_inicio.setStyleSheet("")
             self.refrescar_panel_gestos()
 
     def refrescar_panel_gestos(self):
@@ -190,8 +249,6 @@ class VentanaPrincipal(QMainWindow):
         try:
             with open("config.json", "r", encoding="utf-8") as f:
                 config = json.load(f)
-
-            #!acciones = list(ac.MAPA_ACCIONES.keys())
             dialogo = DialogoModificar(config, self)
             if dialogo.exec():
                 config["gestos"] = dialogo.obtener_config_actualizada()
@@ -205,15 +262,14 @@ class VentanaPrincipal(QMainWindow):
         if self.hilo_vision and self.vision_activa:
             modo_activo = self.hilo_vision.toggle_modo_mouse()
             if modo_activo:
-                self.boton_mouse.setText("Desactivar Mouse")
-                self.boton_mouse.setStyleSheet("background-color: #00E5FF; color: #121212;")
+                self.boton_mouse.setText("🖱️  MOUSE ACTIVO")
+                self.boton_mouse.setStyleSheet("background-color: #00E5FF; color: #121212; border: 2px solid #FFFFFF;")
                 self.overlay.set_estado("Modo Mouse")
             else:
-                self.boton_mouse.setText("Activar Mouse")
+                self.boton_mouse.setText("🖱️  MOUSE")
                 self.boton_mouse.setStyleSheet("") # Restaurar estilo default
                 self.overlay.set_estado("Esperando")
         else:
-            # Si la cámara no está activa, no permitir activar mouse (o activarla automáticamente)
             self.boton_mouse.setChecked(False)
             self.info_estado.setText("Error: Inicia la cámara primero")
 
@@ -238,12 +294,11 @@ class VentanaPrincipal(QMainWindow):
     def close_event(self, event):
         if self.hilo_vision:
             self.hilo_vision.stop()
-        self.overlay.close() # Asegurar que se cierre el overlay
+        self.overlay.close()
         event.accept()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ventana = VentanaPrincipal()
+    ventana = GestusApp()
     ventana.show()
     sys.exit(app.exec())
