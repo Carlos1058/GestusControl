@@ -39,6 +39,8 @@ class MotorVision(QThread):
         self.prev_x, self.prev_y = 0, 0
         self.suavizado = 2 # Reducido de 5 a 2 para menos lag
         self.click_detectado = False
+        self.scroll_detectado = False
+        self.prev_scroll_y = 0
 
     def toggle_modo_mouse(self):
         self.modo_mouse = not self.modo_mouse
@@ -64,44 +66,74 @@ class MotorVision(QThread):
                     self.mp_dibujo.draw_landmarks(frame, mano_landmarks, self.mp_manos.HAND_CONNECTIONS)
                     
                     if self.modo_mouse:
-                        # --- LÓGICA MODO MOUSE ---
+                        # --- LÓGICA MODO MOUSE + SCROLL ---
                         h_frame, w_frame, _ = frame.shape
                         
-                        # 1. Obtener punta del índice (8)
+                        # Detectar dedos levantados (Índice y Medio)
+                        dedo_indice_arriba = mano_landmarks.landmark[8].y < mano_landmarks.landmark[6].y
+                        dedo_medio_arriba = mano_landmarks.landmark[12].y < mano_landmarks.landmark[10].y
+                        dedo_anular_abajo = mano_landmarks.landmark[16].y > mano_landmarks.landmark[14].y
+                        dedo_menique_abajo = mano_landmarks.landmark[20].y > mano_landmarks.landmark[18].y
+                        
+                        es_gesto_scroll = dedo_indice_arriba and dedo_medio_arriba and dedo_anular_abajo and dedo_menique_abajo
+                        
+                        # 1. Obtener posición media de los dedos activos
                         x_indice = mano_landmarks.landmark[8].x
                         y_indice = mano_landmarks.landmark[8].y
                         
-                        # 2. Mapeo de Coordenadas (con margen)
-                        margen = 0.15 # 15% de margen
-                        x_interp = np.interp(x_indice, [margen, 1-margen], [0, self.pantalla_w])
-                        y_interp = np.interp(y_indice, [margen, 1-margen], [0, self.pantalla_h])
-                        
-                        # 3. Suavizado
-                        curr_x = self.prev_x + (x_interp - self.prev_x) / self.suavizado
-                        curr_y = self.prev_y + (y_interp - self.prev_y) / self.suavizado
-                        
-                        # Mover mouse
-                        try:
-                            pyautogui.moveTo(curr_x, curr_y)
-                        except pyautogui.FailSafeException:
-                            pass
+                        if es_gesto_scroll:
+                            # --- MODO SCROLL ---
+                            if not self.scroll_detectado:
+                                self.prev_scroll_y = y_indice
+                                self.scroll_detectado = True
                             
-                        self.prev_x, self.prev_y = curr_x, curr_y
-                        
-                        # 4. Detección de Click (Distancia Índice 8 - Pulgar 4)
-                        x_pulgar = mano_landmarks.landmark[4].x
-                        y_pulgar = mano_landmarks.landmark[4].y
-                        
-                        distancia = ((x_indice - x_pulgar)**2 + (y_indice - y_pulgar)**2)**0.5
-                        
-                        if distancia < 0.05: # Umbral de click
-                            if not self.click_detectado:
-                                pyautogui.click()
-                                self.click_detectado = True
+                            # Calcular desplazamiento vertical
+                            dy = self.prev_scroll_y - y_indice # Invertido: mover mano arriba = scroll arriba
+                            
+                            # Aplicar Scroll (ajustar sensibilidad)
+                            sensibilidad_scroll = 1500 
+                            if abs(dy) > 0.01: # Zona muerta
+                                pyautogui.scroll(int(dy * sensibilidad_scroll))
+                                
+                            self.prev_scroll_y = y_indice
+                            gesto_detectado_ahora = "Modo Scroll"
+                            # No movemos el mouse en modo scroll para evitar caos
+                            
                         else:
-                            self.click_detectado = False
+                            # --- MODO MOUSE (Un solo dedo o Click) ---
+                            self.scroll_detectado = False
                             
-                        gesto_detectado_ahora = "Modo Mouse"
+                            # 2. Mapeo de Coordenadas (con margen)
+                            margen = 0.15 
+                            x_interp = np.interp(x_indice, [margen, 1-margen], [0, self.pantalla_w])
+                            y_interp = np.interp(y_indice, [margen, 1-margen], [0, self.pantalla_h])
+                            
+                            # 3. Suavizado
+                            curr_x = self.prev_x + (x_interp - self.prev_x) / self.suavizado
+                            curr_y = self.prev_y + (y_interp - self.prev_y) / self.suavizado
+                            
+                            # Mover mouse
+                            try:
+                                pyautogui.moveTo(curr_x, curr_y)
+                            except pyautogui.FailSafeException:
+                                pass
+                                
+                            self.prev_x, self.prev_y = curr_x, curr_y
+                            
+                            # 4. Detección de Click (Distancia Índice 8 - Pulgar 4)
+                            x_pulgar = mano_landmarks.landmark[4].x
+                            y_pulgar = mano_landmarks.landmark[4].y
+                            
+                            distancia = ((x_indice - x_pulgar)**2 + (y_indice - y_pulgar)**2)**0.5
+                            
+                            if distancia < 0.05: # Umbral de click
+                                if not self.click_detectado:
+                                    pyautogui.click()
+                                    self.click_detectado = True
+                            else:
+                                self.click_detectado = False
+                                
+                            gesto_detectado_ahora = "Modo Mouse"
                         
                     else:
                         # --- LÓGICA GESTOS NORMAL ---
@@ -148,7 +180,10 @@ class MotorVision(QThread):
             # Feedback de texto
             if self.modo_mouse:
                 estado_texto = "Activo"
-                progreso_texto = "Click: " + ("SI" if self.click_detectado else "NO")
+                if self.scroll_detectado:
+                    progreso_texto = "SCROLL"
+                else:
+                    progreso_texto = "Click: " + ("SI" if self.click_detectado else "NO")
             else:
                 estado_texto = "Confirmado" if self.accion_ejecutada else ("Detectando..." if es_gesto_valido else "Esperando")
                 progreso_texto = ""
