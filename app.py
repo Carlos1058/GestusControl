@@ -10,6 +10,7 @@ from ui_dialogo_modificar import DialogoModificar
 from ui_dialogo_lista import DialogoListaGestos
 import acciones as ac
 import random
+from overlay_visual import OverlayVisual
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -20,6 +21,10 @@ class VentanaPrincipal(QMainWindow):
 
         self.vision_activa = False  # Estado de la cámara
         self.hilo_vision = None     # Inicialmente no hay hilo
+        
+        # Inicializar Overlay (oculto al principio)
+        self.overlay = OverlayVisual()
+        self.overlay.hide()
 
         widget_central = QWidget()
         self.setCentralWidget(widget_central)
@@ -113,7 +118,14 @@ class VentanaPrincipal(QMainWindow):
             self.hilo_vision = MotorVision()
             self.hilo_vision.cambio_de_frame.connect(self.actualizar_frame)
             self.hilo_vision.actualizacion_feedback.connect(self.actualizar_feedback_panel)
+            
+            # Conectar señales del Overlay
+            self.hilo_vision.gesto_progreso.connect(lambda p: self.overlay.set_estado("Detectando", p))
+            self.hilo_vision.gesto_confirmado_signal.connect(lambda g: self.overlay.set_estado("Confirmado"))
+            self.hilo_vision.gesto_cancelado_signal.connect(lambda: self.overlay.set_estado("Cancelado"))
+            
             self.hilo_vision.start()
+            self.overlay.showFullScreen() # Mostrar overlay al iniciar cámara
             self.vision_activa = True
 
             # Cambiar estilo del botón
@@ -135,6 +147,7 @@ class VentanaPrincipal(QMainWindow):
                 self.hilo_vision.stop()
                 self.hilo_vision = None
             self.vision_activa = False
+            self.overlay.hide() # Ocultar overlay
 
             # Limpiar QLabel para que no quede la última imagen
             self.etiqueta_video.clear()
@@ -221,6 +234,7 @@ class VentanaPrincipal(QMainWindow):
     def close_event(self, event):
         if self.hilo_vision:
             self.hilo_vision.stop()
+        self.overlay.close() # Asegurar que se cierre el overlay
         event.accept()
 
 

@@ -5,6 +5,11 @@ import reconocimiento_gestos as rg, acciones as ac
 class MotorVision(QThread):
     cambio_de_frame = pyqtSignal(object)
     actualizacion_feedback = pyqtSignal(str, str, str)
+    
+    # Nuevas señales para el Overlay
+    gesto_progreso = pyqtSignal(float)      # 0.0 a 1.0
+    gesto_confirmado_signal = pyqtSignal(str) # Nombre del gesto confirmado
+    gesto_cancelado_signal = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -17,18 +22,15 @@ class MotorVision(QThread):
         self.mp_manos = mp.solutions.hands
         self.manos = self.mp_manos.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.5)
         self.mp_dibujo = mp.solutions.drawing_utils
-        self.estado_actual = "Esperando gesto"
-        self.gesto_anterior = ""
+        
+        # Variables de estado
+        self.gesto_actual_persistente = "Desconocido"
         self.tiempo_inicio_gesto = 0
-        self.gesto_confirmado = ""
-        self.accion_pendiente = None
-        self.tiempo_inicio_confirmacion = 0
-        self.TIEMPO_PARA_CONFIRMAR = 1.5
-        self.TIEMPO_LIMITE_CONFIRMACION = 5
+        self.TIEMPO_PARA_CONFIRMAR = 1.5 # Segundos para confirmar manteniendo
+        self.accion_ejecutada = False
 
     def run(self):
         cap = cv2.VideoCapture(0)
-        # ## NUEVO: Variables para controlar cuándo emitir la señal ##
         feedback_anterior = ("", "", "")
 
         while self.running and cap.isOpened():
@@ -38,53 +40,79 @@ class MotorVision(QThread):
             frame = cv2.flip(frame, 1)
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             resultados = self.manos.process(frame_rgb)
-            gesto_actual = "Desconocido"
-            texto_feedback = ""
+            
+            gesto_detectado_ahora = "Desconocido"
             
             if resultados.multi_hand_landmarks:
                 for mano_landmarks in resultados.multi_hand_landmarks:
                     self.mp_dibujo.draw_landmarks(frame, mano_landmarks, self.mp_manos.HAND_CONNECTIONS)
-                    gesto_actual = rg.identificar_gestos(mano_landmarks)
-                    if gesto_actual != self.gesto_anterior:
-                        self.gesto_anterior = gesto_actual
-                        self.tiempo_inicio_gesto = time.time()
-                        self.gesto_confirmado = ""
-                    elif gesto_actual != "Desconocido":
-                        if (time.time() - self.tiempo_inicio_gesto) >= self.TIEMPO_PARA_CONFIRMAR:
-                            self.gesto_confirmado = gesto_actual
+                    gesto_detectado_ahora = rg.identificar_gestos(mano_landmarks)
             
-            if self.estado_actual == "Esperando gesto":
-                texto_feedback = "Muestre un gesto para iniciar."
-                if self.gesto_confirmado and self.gesto_confirmado in {gesto["nombre"] for gesto in self.config_gestos["gestos"]}:
-                    id_accion = next((gesto["accion"] for gesto in self.config_gestos["gestos"] if gesto["nombre"] == self.gesto_confirmado), None)
-                    nombre_accion = self.config_gestos["acciones"][id_accion]["nombre"]
-                    if nombre_accion != "Confirmar" and nombre_accion in ac.MAPA_ACCIONES:
-                        self.accion_pendiente = ac.MAPA_ACCIONES[nombre_accion]
-                        self.estado_actual = "Esperando confirmación"
-                        self.tiempo_inicio_confirmacion = time.time()
-                        self.gesto_confirmado, self.gesto_anterior = "", ""
+            # --- Lógica de Hold-to-Confirm ---
             
-            elif self.estado_actual == "Esperando confirmación":
-                if not self.accion_pendiente:
-                    nombre_accion = ""
-                texto_feedback = f"Accion: {nombre_accion}. Confirme con Like."
-                if time.time() - self.tiempo_inicio_confirmacion > self.TIEMPO_LIMITE_CONFIRMACION:
-                    self.estado_actual, self.accion_pendiente = "Esperando gesto", None
-                if self.gesto_confirmado == "Like":
-                    if self.accion_pendiente: self.accion_pendiente()
-                    self.estado_actual, self.accion_pendiente = "Esperando gesto", None
-                    self.gesto_confirmado, self.gesto_anterior = "", ""
+            # Si detectamos un gesto válido (que está en la config)
+            es_gesto_valido = any(g["nombre"] == gesto_detectado_ahora for g in self.config_gestos["gestos"])
+            
+            if es_gesto_valido:
+                if gesto_detectado_ahora != self.gesto_actual_persistente:
+                    # Nuevo gesto detectado (o cambio de gesto)
+                    self.gesto_actual_persistente = gesto_detectado_ahora
+                    self.tiempo_inicio_gesto = time.time()
+                    self.accion_ejecutada = False
+                    self.gesto_progreso.emit(0.0)
+                else:
+                    # Mismo gesto manteniéndose
+                    if not self.accion_ejecutada:
+                        tiempo_transcurrido = time.time() - self.tiempo_inicio_gesto
+                        progreso = min(1.0, tiempo_transcurrido / self.TIEMPO_PARA_CONFIRMAR)
+                        
+                        self.gesto_progreso.emit(progreso)
+                        
+                        if tiempo_transcurrido >= self.TIEMPO_PARA_CONFIRMAR:
+                            # CONFIRMACIÓN
+                            self.accion_ejecutada = True
+                            self.gesto_confirmado_signal.emit(self.gesto_actual_persistente)
+                            self.ejecutar_accion(self.gesto_actual_persistente)
+            else:
+                # No hay gesto o es desconocido
+                if self.gesto_actual_persistente != "Desconocido":
+                    # Se perdió el gesto
+                    self.gesto_actual_persistente = "Desconocido"
+                    self.gesto_cancelado_signal.emit()
+                    self.accion_ejecutada = False
 
             self.cambio_de_frame.emit(frame)
             
-            # ## MODIFICADO: Solo emitimos si la información ha cambiado ##
-            feedback_actual = (self.estado_actual, gesto_actual, texto_feedback)
+            # Feedback de texto para el panel lateral (opcional, pero útil)
+            estado_texto = "Confirmado" if self.accion_ejecutada else ("Detectando..." if es_gesto_valido else "Esperando")
+            
+            # Calcular el progreso solo si es_gesto_valido y no se ha ejecutado la acción
+            progreso_texto = ""
+            if es_gesto_valido and not self.accion_ejecutada:
+                tiempo_transcurrido = time.time() - self.tiempo_inicio_gesto
+                progreso_porcentaje = int(min(1.0, tiempo_transcurrido / self.TIEMPO_PARA_CONFIRMAR) * 100)
+                progreso_texto = f"Progreso: {progreso_porcentaje}%"
+            else:
+                progreso_texto = "Progreso: 0%" # O dejar vacío si no se quiere mostrar nada
+            
+            feedback_actual = (estado_texto, gesto_detectado_ahora, progreso_texto)
+            
             if feedback_actual != feedback_anterior:
                 self.actualizacion_feedback.emit(*feedback_actual)
                 feedback_anterior = feedback_actual
             
             time.sleep(0.01)
         cap.release()
+
+    def ejecutar_accion(self, nombre_gesto):
+        # Buscar ID de acción
+        id_accion = next((g["accion"] for g in self.config_gestos["gestos"] if g["nombre"] == nombre_gesto), None)
+        if id_accion is not None: # Asegurarse de que id_accion no sea None
+            if id_accion < len(self.config_gestos["acciones"]): # Prevenir IndexError
+                nombre_accion_sistema = self.config_gestos["acciones"][id_accion]["nombre"]
+                if nombre_accion_sistema in ac.MAPA_ACCIONES:
+                    print(f"Ejecutando: {nombre_accion_sistema}")
+                    ac.MAPA_ACCIONES[nombre_accion_sistema]()
 
     def stop(self):
         self.running = False
