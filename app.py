@@ -2,7 +2,7 @@ import sys
 import cv2
 import json
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QWidget, 
-                             QVBoxLayout, QHBoxLayout, QPushButton, QFrame)
+                             QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QSizePolicy)
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtCore import Qt
 from motor_vision import MotorVision
@@ -11,13 +11,14 @@ from ui_dialogo_lista import DialogoListaGestos
 import acciones as ac
 import random
 from overlay_visual import OverlayVisual
+from estilos import HOJA_ESTILO
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gestus Control")
+        self.setWindowTitle("GestusControl - Cyberpunk Edition")
         self.setGeometry(100, 100, 1280, 720)
-        self.setStyleSheet("background-color: #FFFFFF;")
+        self.setStyleSheet(HOJA_ESTILO)
 
         self.vision_activa = False  # Estado de la cámara
         self.hilo_vision = None     # Inicialmente no hay hilo
@@ -35,18 +36,20 @@ class VentanaPrincipal(QMainWindow):
         # --- Etiqueta de video ---
         self.etiqueta_video = QLabel("Cámara no iniciada")
         self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px;")
+        self.etiqueta_video.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+        # El estilo se define en estilos.py, pero mantenemos el fondo negro para el video
+        self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
         layout_principal.addWidget(self.etiqueta_video, 3)
 
         # --- Panel derecho ---
         panel_derecho = QWidget()
-        panel_derecho.setStyleSheet("background-color: #F0F0F0; padding: 5px 5px;")
+        panel_derecho.setObjectName("PanelDerecho") # Para aplicar estilo CSS
         self.layout_derecho = QVBoxLayout(panel_derecho)
         self.layout_derecho.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.layout_derecho.setSpacing(10)
 
         titulo_gestos = QLabel("Gestos Sugeridos")
-        titulo_gestos.setStyleSheet("color: #000000; font-size: 22px; font-weight: bold;")
+        titulo_gestos.setObjectName("Titulo")
         self.layout_derecho.addWidget(titulo_gestos)
 
         self.contenedor_gestos = QWidget()
@@ -61,28 +64,23 @@ class VentanaPrincipal(QMainWindow):
         self.layout_derecho.addWidget(linea)
 
         titulo_estado = QLabel("Estado en Vivo")
-        titulo_estado.setStyleSheet("color: #000000; font-size: 18px; font-weight: bold; margin-top: 10px;")
+        titulo_estado.setObjectName("Subtitulo")
         self.layout_derecho.addWidget(titulo_estado)
 
         self.info_estado = QLabel()
         self.info_gesto_detectado = QLabel()
         self.info_feedback = QLabel()
         for label in [self.info_estado, self.info_gesto_detectado, self.info_feedback]:
-            label.setStyleSheet("color: #333333; font-size: 17px;")
+            label.setObjectName("InfoTexto")
             label.setWordWrap(True)
             self.layout_derecho.addWidget(label)
 
         self.layout_derecho.addStretch(1)
 
         # --- Botón Iniciar/Finalizar ---
-        self.boton_inicio = QPushButton("Iniciar")
-        self.boton_inicio.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50; color: white; font-size: 18px;
-                font-weight: bold; padding: 12px; border-radius: 5px; border: none;
-            }
-            QPushButton:hover { background-color: #45A049; }
-        """)
+        self.boton_inicio = QPushButton("Iniciar Sistema")
+        self.boton_inicio.setObjectName("BotonAccion")
+        self.boton_inicio.setCursor(Qt.CursorShape.PointingHandCursor)
         self.boton_inicio.clicked.connect(self.toggle_camara)
         self.layout_derecho.addWidget(self.boton_inicio)
 
@@ -92,13 +90,8 @@ class VentanaPrincipal(QMainWindow):
         boton_modificar = QPushButton("Modificar Gestos")
 
         for boton in [boton_ver_todos, boton_modificar]:
-            boton.setStyleSheet("""
-                QPushButton {
-                    background-color: #E1E1E1; color: #000000; font-size: 15px;
-                    padding: 10px; border-radius: 5px; border: 1px solid #CCCCCC;
-                }
-                QPushButton:hover { background-color: #D1D1D1; }
-            """)
+            # Estilo manejado por CSS global (QPushButton)
+            boton.setCursor(Qt.CursorShape.PointingHandCursor)
             layout_botones.addWidget(boton)
 
         self.layout_derecho.addLayout(layout_botones)
@@ -129,16 +122,12 @@ class VentanaPrincipal(QMainWindow):
             self.vision_activa = True
 
             # Cambiar estilo del botón
-            self.boton_inicio.setText("Finalizar")
-            self.boton_inicio.setStyleSheet("""
-                QPushButton {
-                    background-color: #E53935; color: white; font-size: 18px;
-                    font-weight: bold; padding: 12px; border-radius: 5px; border: none;
-                }
-                QPushButton:hover { background-color: #C62828; }
-            """
-            )
-            self.etiqueta_video.setText("Iniciando cámara...")
+            self.boton_inicio.setText("Finalizar Sistema")
+            # El color rojo/magenta se puede manejar dinámicamente o dejar que el estilo "BotonAccion" lo maneje.
+            # Para feedback visual de "Parar", podemos cambiar el estilo inline momentáneamente o confiar en el texto.
+            self.boton_inicio.setStyleSheet("background-color: #FF1744; color: white; border: none;") 
+            
+            self.etiqueta_video.setText("Iniciando sensores...")
 
             self.refrescar_panel_gestos()
         else:
@@ -151,19 +140,15 @@ class VentanaPrincipal(QMainWindow):
 
             # Limpiar QLabel para que no quede la última imagen
             self.etiqueta_video.clear()
-            self.etiqueta_video.setText("Cámara detenida.")
+            self.etiqueta_video.setText("Sistema en espera.")
             self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px;")
+            # Restaurar borde neon
+            self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
 
             # Restaurar botón
-            self.boton_inicio.setText("Iniciar")
-            self.boton_inicio.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50; color: white; font-size: 16px;
-                    font-weight: bold; padding: 12px; border-radius: 5px; border: none;
-                }
-                QPushButton:hover { background-color: #45A049; }
-            """)
+            self.boton_inicio.setText("Iniciar Sistema")
+            self.boton_inicio.setStyleSheet("") # Restaurar al estilo de la hoja de estilos (ID BotonAccion)
+            
             self.refrescar_panel_gestos()
 
     def refrescar_panel_gestos(self):
@@ -181,7 +166,7 @@ class VentanaPrincipal(QMainWindow):
                     nombre_gesto = gesto["nombre"]
                     descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
                     label_gesto = QLabel(f"▪ {gesto.get('emoji', '')} {nombre_gesto}\n    > {descripcion_gesto}")
-                    label_gesto.setStyleSheet("color: #333333; font-size: 18px;")
+                    label_gesto.setObjectName("InfoTexto")
                     label_gesto.setWordWrap(True)
                     self.layout_gestos.addWidget(label_gesto)
         except Exception as e:

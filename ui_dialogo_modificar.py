@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QComboBox, QDialogButtonBox, QGraphicsDropShadowEffect
 )
 from PyQt6.QtGui import QColor
+from estilos import HOJA_ESTILO
 
 
 class DialogoModificar(QDialog):
@@ -12,78 +13,7 @@ class DialogoModificar(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Modificar Asignación de Gestos")
         self.setMinimumSize(500, 250)
-        self.setStyleSheet("""
-            QDialog { 
-                background-color: #FFFFFF;
-                border-radius: 10px;
-            }
-
-            QLabel {
-                font-size: 18px;
-                color: #222222;
-                font-weight: 500;
-                margin-bottom: 6px;
-            }
-
-            /* ComboBox */
-            QComboBox {
-                font-size: 17px;
-                padding: 3px 4px;
-                color: #202020;
-                background-color: #FAFAFA;
-                border: 1px solid #CCCCCC;
-                border-radius: 6px;
-            }
-            QComboBox:hover {
-                background-color: #FFFFFF;
-                border: 1px solid #4CAF50;
-            }
-
-            /* Estilo del menú desplegable */
-            QComboBox QAbstractItemView {
-                background-color: #FFFFFF;
-                color: #000000;
-                border: 1px solid #BBBBBB;
-                border-radius: 4px;
-                selection-background-color: #C8E6C9;
-                selection-color: #000000;
-            }
-            /* Hover sobre los ítems */
-            QComboBox QAbstractItemView::item:hover {
-                background-color: #E6F4EA;
-                color: #000000;
-            }
-
-            /* Botones */
-            QPushButton {
-                font-size: 20px;
-                padding: 4px 8px;
-                border-radius: 6px;
-                border: 1px solid transparent;
-                font-weight: 500;
-            }
-
-            /* Guardar */
-            QPushButton:default {
-                background-color: #4CAF50;
-                color: #FFFFFF;
-            }
-            QPushButton:default:hover {
-                background-color: #45A049;
-            }
-
-            /* Cancelar */
-            QPushButton:!default {
-                background-color: #F5F5F5;
-                color: #333333;
-                border: 1px solid #CCCCCC;
-            }
-            QPushButton:!default:hover {
-                background-color: #FFEBEE;
-                border: 1px solid #E57373;
-                color: #C62828;
-            }
-        """)
+        self.setStyleSheet(HOJA_ESTILO)
 
         # Efecto de sombra suave alrededor del cuadro
         sombra = QGraphicsDropShadowEffect()
@@ -103,7 +33,7 @@ class DialogoModificar(QDialog):
 
         # Texto superior
         info_label = QLabel("Seleccione un gesto y asigne la acción correspondiente:")
-        info_label.setStyleSheet("font-weight: bold; font-size: 18px; color: #333333;")
+        info_label.setObjectName("InfoTexto")
         layout.addWidget(info_label)
 
         # ComboBox de gestos

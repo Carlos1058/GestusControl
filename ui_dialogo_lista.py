@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QWidget, QDialogButtonBox, QFrame, QGraphicsDropShadowEffect
 )
 from PyQt6.QtGui import QColor
+from estilos import HOJA_ESTILO
 
 
 class DialogoListaGestos(QDialog):
@@ -12,45 +13,7 @@ class DialogoListaGestos(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Lista Completa de Gestos")
         self.setMinimumSize(520, 620)
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #FAFAFA;
-                border-radius: 10px;
-            }
-
-            QLabel {
-                color: #222222;
-                font-family: 'Segoe UI';
-            }
-
-            QScrollArea {
-                border: none;
-                background: transparent;
-            }
-
-            /* Tarjeta visual */
-            QFrame {
-                background-color: #FFFFFF;
-                border-radius: 8px;
-                border: 1px solid #E0E0E0;
-                margin-bottom: 10px;
-            }
-
-            /* Botón */
-            QPushButton {
-                background-color: #4CAF50;
-                color: #FFFFFF;
-                font-size: 16px;
-                font-weight: 500;
-                padding: 10px 20px;
-                border-radius: 6px;
-                border: none;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45A049;
-            }
-        """)
+        self.setStyleSheet(HOJA_ESTILO)
 
         # --- Efecto de sombra general ---
         sombra = QGraphicsDropShadowEffect()
@@ -64,7 +27,7 @@ class DialogoListaGestos(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         titulo = QLabel("Lista completa de gestos y sus acciones")
-        titulo.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px;")
+        titulo.setObjectName("Titulo")
         layout.addWidget(titulo)
 
         # Área de scroll
@@ -87,14 +50,16 @@ class DialogoListaGestos(QDialog):
             tarjeta_layout.setSpacing(4)
 
             label_titulo = QLabel(f"<b>{gesto.get('emoji', '')} {gesto['nombre'].replace('_', ' ').title()}</b>")
-            label_titulo.setStyleSheet("font-size: 18px; color: #1B5E20;")
+            label_titulo.setObjectName("InfoTexto")
+            # Estilo específico para el título de la tarjeta si es necesario, o confiar en InfoTexto
+            label_titulo.setStyleSheet("font-size: 18px; color: #00E5FF;") 
 
             label_accion = QLabel(f"Acción: <i>{acciones[gesto['accion']]['nombre']}</i>")
-            label_accion.setStyleSheet("font-size: 17px; color: #000000;")
+            label_accion.setObjectName("InfoTexto")
+            
             label_desc = QLabel(f"{acciones[gesto['accion']]['descripcion']}")
-
+            label_desc.setObjectName("InfoTexto")
             label_desc.setWordWrap(True)
-            label_desc.setStyleSheet("font-size: 17px; color: #000000;")
 
             tarjeta_layout.addWidget(label_titulo)
             tarjeta_layout.addWidget(label_accion)
