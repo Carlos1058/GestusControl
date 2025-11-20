@@ -14,6 +14,9 @@ class MotorVision(QThread):
     gesto_progreso = pyqtSignal(float)      # 0.0 a 1.0
     gesto_confirmado_signal = pyqtSignal(str) # Nombre del gesto confirmado
     gesto_cancelado_signal = pyqtSignal()
+    
+    # Señal para Dwell Click
+    dwell_progreso = pyqtSignal(float, int, int) # Progreso (0-1), X, Y
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -41,9 +44,17 @@ class MotorVision(QThread):
         self.click_detectado = False
         self.scroll_detectado = False
         self.prev_scroll_y = 0
+        
+        # Variables Dwell Click
+        self.tiempo_inicio_dwell = 0
+        self.prev_x_dwell, self.prev_y_dwell = 0, 0
+        self.TIEMPO_DWELL = 1.5 # Segundos para click
 
     def toggle_modo_mouse(self):
         self.modo_mouse = not self.modo_mouse
+        # Limpiar estado de dwell al cambiar de modo
+        self.tiempo_inicio_dwell = 0
+        self.dwell_progreso.emit(0.0, 0, 0)
         return self.modo_mouse
 
     def run(self):
@@ -99,6 +110,10 @@ class MotorVision(QThread):
                             gesto_detectado_ahora = "Modo Scroll"
                             # No movemos el mouse en modo scroll para evitar caos
                             
+                            # Resetear dwell si hacemos scroll
+                            self.tiempo_inicio_dwell = 0
+                            self.dwell_progreso.emit(0.0, 0, 0)
+                            
                         else:
                             # --- MODO MOUSE (Un solo dedo o Click) ---
                             self.scroll_detectado = False
@@ -120,18 +135,24 @@ class MotorVision(QThread):
                                 
                             self.prev_x, self.prev_y = curr_x, curr_y
                             
-                            # 4. Detección de Click (Distancia Índice 8 - Pulgar 4)
-                            x_pulgar = mano_landmarks.landmark[4].x
-                            y_pulgar = mano_landmarks.landmark[4].y
+                            # 4. Detección de Dwell Click (Permanencia con Ancla)
+                            # Si no estamos en dwell, iniciamos
+                            if self.tiempo_inicio_dwell == 0:
+                                self.tiempo_inicio_dwell = time.time()
+                                self.prev_x_dwell, self.prev_y_dwell = curr_x, curr_y # Usamos prev_x_dwell como ANCLA
+                                
+                            # Calcular distancia desde el ANCLA (no desde el frame anterior)
+                            distancia_ancla = ((curr_x - self.prev_x_dwell)**2 + (curr_y - self.prev_y_dwell)**2)**0.5
                             
-                            distancia = ((x_indice - x_pulgar)**2 + (y_indice - y_pulgar)**2)**0.5
+                            RADIO_TOLERANCIA = 40 # Píxeles de tolerancia para temblores
                             
-                            if distancia < 0.05: # Umbral de click
-                                if not self.click_detectado:
-                                    pyautogui.click()
-                                    self.click_detectado = True
-                            else:
+                            if distancia_ancla < RADIO_TOLERANCIA:
+                                # Estamos dentro del radio, continuar dwell
+                                tiempo_dwell = time.time() - self.tiempo_inicio_dwell
+                                self.tiempo_inicio_dwell = 0
                                 self.click_detectado = False
+                                self.dwell_progreso.emit(0.0, int(curr_x), int(curr_y))
+                                # El nuevo ancla se establecerá en el siguiente frame al entrar en el if inicial
                                 
                             gesto_detectado_ahora = "Modo Mouse"
                         

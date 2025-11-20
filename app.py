@@ -187,6 +187,7 @@ class GestusApp(QMainWindow):
             self.hilo_vision.gesto_progreso.connect(lambda p: self.overlay.set_estado("Detectando", p))
             self.hilo_vision.gesto_confirmado_signal.connect(lambda g: self.overlay.set_estado("Confirmado"))
             self.hilo_vision.gesto_cancelado_signal.connect(lambda: self.overlay.set_estado("Cancelado"))
+            self.hilo_vision.dwell_progreso.connect(self.overlay.set_dwell_estado)
             
             self.hilo_vision.start()
             self.overlay.showFullScreen()
