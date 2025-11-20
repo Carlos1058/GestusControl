@@ -1,0 +1,76 @@
+/* Global Window Style */
+QMainWindow {
+    background-color: #1e1e1e; /* Deep dark gray */
+}
+
+/* Labels */
+QLabel {
+    color: #ffffff;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 14px;
+}
+
+/* Floating Dock (Glass Effect) */
+#FloatingDock {
+    background-color: rgba(45, 45, 45, 200); /* Semi-transparent dark */
+    border: 1px solid rgba(255, 255, 255, 30);
+    border-radius: 20px;
+}
+
+/* Dock Buttons */
+QPushButton#DockButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QPushButton#DockButton:hover {
+    background-color: rgba(255, 255, 255, 20);
+    border: 1px solid rgba(0, 229, 255, 100); /* Cyan glow */
+}
+
+QPushButton#DockButton:checked {
+    background-color: rgba(0, 229, 255, 50); /* Cyan active */
+    border: 1px solid #00e5ff;
+    color: #00e5ff;
+}
+
+QPushButton#DockButton#ExitButton:hover {
+    background-color: rgba(255, 50, 50, 50);
+    border: 1px solid #ff3232;
+}
+
+/* Sidebar (Glass Effect) */
+#Sidebar {
+    background-color: rgba(30, 30, 30, 240);
+    border-left: 1px solid rgba(255, 255, 255, 20);
+}
+
+/* Sidebar Header */
+QLabel#SidebarHeader {
+    font-size: 18px;
+    font-weight: bold;
+    color: #bb86fc; /* Purple accent */
+    padding: 10px;
+}
+
+/* Toast Notification */
+#Toast {
+    background-color: rgba(0, 0, 0, 200);
+    color: #00e5ff;
+    border: 1px solid #00e5ff;
+    border-radius: 15px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+/* Video Frame Container */
+#VideoContainer {
+    background-color: #000000;
+    border: 2px solid rgba(0, 229, 255, 50);
+    border-radius: 15px;
+}

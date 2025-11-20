@@ -41,10 +41,6 @@ def identificar_gestos(mano_landmarks):
     if indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:
         return "Puno cerrado"
         
-    # Gesto APUNTAR (Índice estirado, resto cerrado)
-    if indice_estirado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:
-        return "Apuntar"
-
     # Gesto PAZ (Índice y medio estirados, resto cerrado)
     if indice_estirado and medio_estirado and anular_cerrado and menique_cerrado:
         return "Paz"
@@ -66,6 +62,17 @@ def identificar_gestos(mano_landmarks):
     distancia_ok = ((puntos[8].x - puntos[4].x)**2 + (puntos[8].y - puntos[4].y)**2)**0.5
     if distancia_ok < 0.05 and medio_estirado and anular_estirado and menique_estirado:
         return "Ok"
+
+    # Gesto CRUZADO (Dedos índice y medio cruzados)
+    if indice_estirado and medio_estirado and anular_cerrado and menique_cerrado:
+        # Distancia entre puntas muy pequeña
+        distancia_cruz = abs(puntos[8].x - puntos[12].x)
+        if distancia_cruz < 0.04: 
+             return "Cruzado"
+
+    # Gesto INDICE ARRIBA (Solo índice estirado, pulgar cerrado)
+    if indice_estirado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:
+        return "Indice Arriba"
 
     # Si no se cumple ninguna condición
     return "Desconocido"

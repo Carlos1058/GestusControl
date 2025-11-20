@@ -90,49 +90,71 @@ class OverlayVisual(QWidget):
         self.dwell_active = self.dwell_progreso > 0
         self.update()
 
-    def paintEvent(self, event):
-        if self._grosor <= 0 and not self.dwell_active: # Modificado para permitir pintar si solo dwell está activo
-            return
+    def set_progreso_gesto(self, progreso):
+        """Actualiza el progreso del gesto actual (0.0 a 1.0)."""
+        self.set_estado("Detectando", progreso)
 
+    def reset_progreso(self):
+        """Reinicia el estado visual."""
+        self.set_estado("Inactivo")
+
+    def mostrar_confirmacion(self, nombre_gesto):
+        """Muestra un feedback visual de confirmación."""
+        self.set_estado("Confirmado")
+        # Aquí podríamos dibujar el nombre del gesto en el centro si quisiéramos
+        self.mensaje_centro = nombre_gesto
+        self.tiempo_mensaje = 50 # frames
+        self.update()
+
+    def mostrar_mensaje_centro(self, mensaje):
+        """Muestra un mensaje temporal en el centro."""
+        self.mensaje_centro = mensaje
+        self.tiempo_mensaje = 50
+        self.update()
+
+    def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Dibujar borde
-        pen = QPen(self._color_borde)
-        pen.setWidth(int(self._grosor))
-        # Alineación del borde: Inset para que no se corte
-        pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        
-        rect = self.rect().adjusted(
-            int(self._grosor/2), int(self._grosor/2), 
-            -int(self._grosor/2), -int(self._grosor/2)
-        )
-        painter.drawRect(rect)
-        
-        # Dibujar Dwell Click (Círculo de carga)
+        # 1. Dibujar Borde de Estado (Glow)
+        if self._grosor > 0:
+            pen = QPen(self._color_borde)
+            pen.setWidth(int(self._grosor))
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            rect = self.rect().adjusted(10, 10, -10, -10)
+            painter.drawRoundedRect(rect, 20, 20)
+
+        # 2. Dibujar Dwell Click (Círculo de carga)
         if self.dwell_active:
-            # Configuración estilo Cyberpunk
             color_dwell = QColor(0, 229, 255) # Cyan
             radio = 30
-            
-            # 1. Círculo base (fondo tenue)
             pen_base = QPen(QColor(0, 229, 255, 50))
             pen_base.setWidth(4)
             painter.setPen(pen_base)
             painter.drawEllipse(self.dwell_x - radio, self.dwell_y - radio, radio * 2, radio * 2)
             
-            # 2. Arco de progreso
             pen_progreso = QPen(color_dwell)
             pen_progreso.setWidth(4)
             pen_progreso.setCapStyle(Qt.PenCapStyle.RoundCap)
             painter.setPen(pen_progreso)
-            
-            angulo_span = int(360 * 16 * self.dwell_progreso) # 16 es para convertir a 1/16 de grado
-            # drawArc toma: x, y, w, h, startAngle, spanAngle
-            # startAngle 90 grados (12 en punto) = 90 * 16 = 1440
+            angulo_span = int(360 * 16 * self.dwell_progreso)
             painter.drawArc(self.dwell_x - radio, self.dwell_y - radio, radio * 2, radio * 2, 90 * 16, -angulo_span)
+
+        # 3. Dibujar Mensaje Central (si existe)
+        if hasattr(self, 'mensaje_centro') and self.mensaje_centro and getattr(self, 'tiempo_mensaje', 0) > 0:
+            self.tiempo_mensaje -= 1
+            painter.setPen(QColor(255, 255, 255))
+            font = painter.font()
+            font.setPointSize(24)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.mensaje_centro)
+            if self.tiempo_mensaje <= 0:
+                self.mensaje_centro = ""
+                self.update()
+            else:
+                self.update() # Seguir animando
 
 if __name__ == "__main__":
     # Test rápido

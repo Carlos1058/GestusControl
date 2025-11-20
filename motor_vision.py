@@ -21,11 +21,7 @@ class MotorVision(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.running = True
-        try:
-            with open('config.json', 'r', encoding='utf-8') as f:
-                self.config_gestos = json.load(f)
-        except Exception:
-            self.config_gestos = {"acciones": [], "gestos": []}
+        self.cargar_configuracion()
         self.mp_manos = mp.solutions.hands
         self.manos = self.mp_manos.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.5)
         self.mp_dibujo = mp.solutions.drawing_utils
@@ -49,6 +45,16 @@ class MotorVision(QThread):
         self.tiempo_inicio_dwell = 0
         self.prev_x_dwell, self.prev_y_dwell = 0, 0
         self.TIEMPO_DWELL = 1.5 # Segundos para click
+
+    def cargar_configuracion(self):
+        """Carga la configuración de gestos desde el archivo JSON."""
+        try:
+            with open('config.json', 'r', encoding='utf-8') as f:
+                self.config_gestos = json.load(f)
+            print("Configuración recargada en MotorVision")
+        except Exception as e:
+            print(f"Error cargando config: {e}")
+            self.config_gestos = {"acciones": [], "gestos": []}
 
     def toggle_modo_mouse(self):
         self.modo_mouse = not self.modo_mouse
@@ -140,19 +146,35 @@ class MotorVision(QThread):
                             if self.tiempo_inicio_dwell == 0:
                                 self.tiempo_inicio_dwell = time.time()
                                 self.prev_x_dwell, self.prev_y_dwell = curr_x, curr_y # Usamos prev_x_dwell como ANCLA
-                                
-                            # Calcular distancia desde el ANCLA (no desde el frame anterior)
+                            
+                            # Calcular distancia desde el ANCLA
                             distancia_ancla = ((curr_x - self.prev_x_dwell)**2 + (curr_y - self.prev_y_dwell)**2)**0.5
                             
-                            RADIO_TOLERANCIA = 40 # Píxeles de tolerancia para temblores
+                            RADIO_TOLERANCIA = 60 # Aumentado a 60px para mayor tolerancia
                             
                             if distancia_ancla < RADIO_TOLERANCIA:
                                 # Estamos dentro del radio, continuar dwell
                                 tiempo_dwell = time.time() - self.tiempo_inicio_dwell
+                                progreso = min(1.0, tiempo_dwell / self.TIEMPO_DWELL)
+                                
+                                # print(f"DEBUG: Dwell Progreso: {progreso:.2f}")
+                                self.dwell_progreso.emit(progreso, int(self.prev_x_dwell), int(self.prev_y_dwell))
+                                
+                                if tiempo_dwell >= self.TIEMPO_DWELL:
+                                    # CLICK!
+                                    if not self.click_detectado:
+                                        print("DEBUG: CLICK EJECUTADO")
+                                        pyautogui.click()
+                                        self.click_detectado = True
+                                        self.dwell_progreso.emit(1.0, int(self.prev_x_dwell), int(self.prev_y_dwell))
+                                        # Resetear para permitir otro click si se mueve y vuelve
+                                        self.tiempo_inicio_dwell = 0 
+                            else:
+                                # Salimos del radio, resetear
+                                # print(f"DEBUG: Dwell Reset - Distancia: {distancia_ancla:.2f}")
                                 self.tiempo_inicio_dwell = 0
                                 self.click_detectado = False
                                 self.dwell_progreso.emit(0.0, int(curr_x), int(curr_y))
-                                # El nuevo ancla se establecerá en el siguiente frame al entrar en el if inicial
                                 
                             gesto_detectado_ahora = "Modo Mouse"
                         
@@ -268,14 +290,15 @@ class MotorVision(QThread):
             cv2.putText(frame, "MOUSE MODE: ON", (w - 180, 50), font, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
 
     def ejecutar_accion(self, nombre_gesto):
-        # Buscar ID de acción
-        id_accion = next((g["accion"] for g in self.config_gestos["gestos"] if g["nombre"] == nombre_gesto), None)
-        if id_accion is not None: # Asegurarse de que id_accion no sea None
-            if id_accion < len(self.config_gestos["acciones"]): # Prevenir IndexError
-                nombre_accion_sistema = self.config_gestos["acciones"][id_accion]["nombre"]
-                if nombre_accion_sistema in ac.MAPA_ACCIONES:
-                    print(f"Ejecutando: {nombre_accion_sistema}")
-                    ac.MAPA_ACCIONES[nombre_accion_sistema]()
+        # Buscar nombre de acción
+        nombre_accion = next((g.get("accion_nombre") for g in self.config_gestos["gestos"] if g["nombre"] == nombre_gesto), None)
+        
+        if nombre_accion and nombre_accion != "Ninguna":
+            if nombre_accion in ac.MAPA_ACCIONES:
+                print(f"Ejecutando: {nombre_accion}")
+                ac.MAPA_ACCIONES[nombre_accion]()
+            else:
+                print(f"Acción no encontrada en mapa: {nombre_accion}")
 
     def stop(self):
         self.running = False

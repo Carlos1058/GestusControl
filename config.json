@@ -1,6 +1,10 @@
 {
   "acciones": [
     {
+      "nombre": "Ninguna",
+      "descripcion": "No hace nada."
+    },
+    {
       "nombre": "Confirmar",
       "descripcion": "Confirma la ejecucion de una accion."
     },
@@ -49,57 +53,57 @@
     {
       "nombre": "Like",
       "emoji": "👍🏻",
-      "accion": 0
+      "accion_nombre": "Confirmar"
     },
     {
       "nombre": "Mano abierta",
       "emoji": "🖐🏻",
-      "accion": 1
+      "accion_nombre": "Abrir YouTube"
     },
     {
       "nombre": "Puno cerrado",
       "emoji": "✊🏻",
-      "accion": 2
+      "accion_nombre": "Abrir YouTube"
     },
     {
       "nombre": "Apuntar",
       "emoji": "👉🏻",
-      "accion": 3
+      "accion_nombre": "Ninguna"
     },
     {
       "nombre": "Paz",
       "emoji": "✌🏻",
-      "accion": 4
+      "accion_nombre": "Abrir menu de inicio"
     },
     {
       "nombre": "Cuernos",
       "emoji": "🤘🏻",
-      "accion": 5
+      "accion_nombre": "Abrir YouTube"
     },
     {
       "nombre": "Llamame",
       "emoji": "🤙🏻",
-      "accion": 6
+      "accion_nombre": "Activar Cortana"
     },
     {
       "nombre": "Pulgar abajo",
       "emoji": "👎🏻",
-      "accion": 7
+      "accion_nombre": "Silenciar volumen"
     },
     {
       "nombre": "Ok",
       "emoji": "👌🏻",
-      "accion": 8
+      "accion_nombre": "Ninguna"
     },
     {
-      "nombre": "Gesto extra 1",
+      "nombre": "Cruzado",
       "emoji": "🤞🏻",
-      "accion": 9
+      "accion_nombre": "Abrir calculadora"
     },
     {
-      "nombre": "Gesto extra 2",
+      "nombre": "Indice Arriba",
       "emoji": "☝🏻",
-      "accion": 10
+      "accion_nombre": "Ninguna"
     }
   ]
 }

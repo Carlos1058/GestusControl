@@ -1,301 +1,355 @@
 import sys
 import cv2
 import json
-import random
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QWidget, 
-                             QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QSizePolicy)
+                             QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QSizePolicy, QComboBox)
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from motor_vision import MotorVision
-from ui_dialogo_modificar import DialogoModificar
-from ui_dialogo_lista import DialogoListaGestos
-import acciones as ac
 from overlay_visual import OverlayVisual
-from estilos import HOJA_ESTILO
-
-class BarraTitulo(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setObjectName("BarraTitulo")
-        self.setFixedHeight(40)
-        
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        
-        # Título
-        self.titulo = QLabel("GESTUS CONTROL // CYBERPUNK_EDITION")
-        self.titulo.setObjectName("TituloApp")
-        layout.addWidget(self.titulo)
-        
-        layout.addStretch()
-        
-        # Botones
-        self.btn_min = QPushButton("_")
-        self.btn_min.setObjectName("BotonControl")
-        self.btn_min.setFixedSize(40, 40)
-        self.btn_min.clicked.connect(parent.showMinimized)
-        layout.addWidget(self.btn_min)
-        
-        self.btn_close = QPushButton("X")
-        self.btn_close.setObjectName("BotonControl")
-        self.btn_close.setObjectName("BotonCerrar") # ID específico para estilo rojo
-        self.btn_close.setFixedSize(40, 40)
-        self.btn_close.clicked.connect(parent.close)
-        layout.addWidget(self.btn_close)
-        
-        # Variables para mover ventana
-        self.start_pos = None
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.start_pos = event.globalPosition().toPoint()
-
-    def mouseMoveEvent(self, event):
-        if self.start_pos:
-            delta = event.globalPosition().toPoint() - self.start_pos
-            self.window().move(self.window().pos() + delta)
-            self.start_pos = event.globalPosition().toPoint()
-
-    def mouseReleaseEvent(self, event):
-        self.start_pos = None
 
 class GestusApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("GestusControl - Cyberpunk Edition")
+        self.setWindowTitle("GestusControl V2.0")
+        self.setGeometry(100, 100, 1280, 720)
         
-        # Configuración Frameless
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.resize(1100, 700)
-        
-        self.setStyleSheet(HOJA_ESTILO)
+        # Cargar estilos
+        try:
+            with open("styles.qss", "r") as f:
+                self.setStyleSheet(f.read())
+        except FileNotFoundError:
+            print("Advertencia: styles.qss no encontrado.")
 
-        self.vision_activa = False
-        self.hilo_vision = None
+        # Estado
+        self.camara_activa = False
+        self.modo_mouse_activo = False
+        self.sidebar_expanded = False
+
+        # --- UI SETUP V2 ---
+        self.setup_ui_v2()
+
+        # Motor de Visión
+        self.hilo_vision = MotorVision()
+        self.hilo_vision.cambio_de_frame.connect(self.actualizar_imagen)
+        self.hilo_vision.actualizacion_feedback.connect(self.actualizar_feedback_toast) # Nuevo slot para Toasts
+        self.hilo_vision.gesto_progreso.connect(self.overlay.set_progreso_gesto)
+        self.hilo_vision.gesto_confirmado_signal.connect(self.mostrar_confirmacion_gesto)
+        self.hilo_vision.gesto_cancelado_signal.connect(self.overlay.reset_progreso)
+        self.hilo_vision.dwell_progreso.connect(self.overlay.set_dwell_estado)
+
+    def setup_ui_v2(self):
+        """Configura la interfaz moderna con Dock y Sidebar."""
+        # Widget central que contiene todo (Overlay Layout)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
         
+        # Layout principal: Stacked para poner UI sobre Video, o Absolute
+        # Usaremos un layout principal con márgenes 0 y un overlay manual
+        self.main_layout = QVBoxLayout(central_widget)
+        self.main_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # 1. Contenedor de Video (Fondo)
+        self.video_container = QLabel("Cámara Inactiva")
+        self.video_container.setObjectName("VideoContainer")
+        self.video_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # IMPORTANTE: Ignored evita que el QLabel fuerce el tamaño de la ventana al cambiar el pixmap
+        self.video_container.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+        self.main_layout.addWidget(self.video_container)
+
+        # 2. Overlay Visual (Transparente, encima del video)
+        # Nota: En esta arquitectura simplificada, el OverlayVisual se pinta SOBRE el video_container
+        # o usamos una ventana transparente separada. Por simplicidad y robustez, usaremos 
+        # el OverlayVisual como un widget hijo del video_container o encima de él.
+        # Para V2, mantendremos el OverlayVisual como ventana independiente 'AlwaysOnTop' 
+        # controlada por app.py, ya que funcionó bien para el Dwell Click.
         self.overlay = OverlayVisual()
-        self.overlay.hide()
+        # El overlay se posicionará dinámicamente sobre el video_container en resizeEvent si quisiéramos,
+        # pero el diseño actual de OverlayVisual es "pantalla completa transparente".
+        # Lo dejaremos así para que cubra todo.
 
-        # Widget central principal (contenedor de todo)
-        self.widget_central = QWidget()
-        self.widget_central.setObjectName("FondoPrincipal") # Para aplicar borde/fondo
-        self.setCentralWidget(self.widget_central)
+        # 3. Dock Flotante (Abajo)
+        self.dock_widget = QFrame(self)
+        self.dock_widget.setObjectName("FloatingDock")
+        dock_layout = QHBoxLayout(self.dock_widget)
+        dock_layout.setContentsMargins(20, 10, 20, 10)
+        dock_layout.setSpacing(20)
+
+        # Botones del Dock
+        self.btn_camara = self.crear_boton_dock("📷 Iniciar", self.toggle_camara)
+        self.btn_mouse = self.crear_boton_dock("🖱️ Mouse", self.toggle_mouse_mode, checkable=True)
+        self.btn_menu = self.crear_boton_dock("⚙️ Gestos", self.toggle_sidebar, checkable=True)
+        self.btn_salir = self.crear_boton_dock("❌ Salir", self.close)
+        self.btn_salir.setObjectName("ExitButton")
+
+        dock_layout.addWidget(self.btn_camara)
+        dock_layout.addWidget(self.btn_mouse)
+        dock_layout.addWidget(self.btn_menu)
+        dock_layout.addWidget(self.btn_salir)
+
+        # 4. Sidebar (Derecha)
+        self.sidebar = QFrame(self)
+        self.sidebar.setObjectName("Sidebar")
+        self.sidebar.setFixedWidth(0) # Inicialmente colapsado
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(10, 20, 10, 20)
         
-        # Layout Principal (Vertical: Barra Título + Contenido)
-        self.layout_principal = QVBoxLayout(self.widget_central)
-        self.layout_principal.setContentsMargins(0, 0, 0, 0)
-        self.layout_principal.setSpacing(0)
+        lbl_gestos = QLabel("Configuración de Gestos")
+        lbl_gestos.setObjectName("SidebarHeader")
+        sidebar_layout.addWidget(lbl_gestos)
         
-        # 1. Barra de Título
-        self.barra_titulo = BarraTitulo(self)
-        self.layout_principal.addWidget(self.barra_titulo)
+        # Scroll Area para los gestos
+        from PyQt6.QtWidgets import QScrollArea
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("background: transparent; border: none;")
         
-        # 2. Contenido (Horizontal: Video + Panel)
-        self.contenido_layout = QHBoxLayout()
-        self.contenido_layout.setContentsMargins(20, 20, 20, 20)
-        self.contenido_layout.setSpacing(20)
-        self.layout_principal.addLayout(self.contenido_layout)
-
-        # --- Panel Izquierdo: Video ---
-        self.panel_video = QWidget()
-        self.layout_video = QVBoxLayout(self.panel_video)
-        self.layout_video.setContentsMargins(0, 0, 0, 0)
+        scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_layout.setSpacing(15)
         
-        self.etiqueta_video = QLabel("Cámara apagada")
-        self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.etiqueta_video.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
-        self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
-        self.layout_video.addWidget(self.etiqueta_video)
+        scroll.setWidget(scroll_content)
+        sidebar_layout.addWidget(scroll)
         
-        self.contenido_layout.addWidget(self.panel_video, 65)
+        # Construir la lista de gestos dinámicamente
+        self.construir_sidebar_gestos()
+            
+        # Botón Guardar
+        btn_guardar = QPushButton("💾 Guardar Cambios")
+        btn_guardar.setObjectName("ActionBtn")
+        btn_guardar.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_guardar.clicked.connect(self.guardar_configuracion)
+        sidebar_layout.addWidget(btn_guardar)
 
-        # --- Panel Derecho: Controles ---
-        self.panel_control = QWidget()
-        self.panel_control.setObjectName("PanelDerecho")
-        self.layout_derecho = QVBoxLayout(self.panel_control)
-        self.layout_derecho.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.layout_derecho.setSpacing(10)
+        # 5. Toast Notification (Arriba Centro)
+        self.toast = QLabel(self)
+        self.toast.setObjectName("Toast")
+        self.toast.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.toast.hide()
+        self.toast_timer = QTimer()
+        self.toast_timer.setSingleShot(True)
+        self.toast_timer.timeout.connect(self.ocultar_toast)
 
-        titulo_gestos = QLabel("Gestos Sugeridos")
-        titulo_gestos.setObjectName("Titulo")
-        self.layout_derecho.addWidget(titulo_gestos)
+    def crear_boton_dock(self, texto, funcion, checkable=False):
+        btn = QPushButton(texto)
+        btn.setObjectName("DockButton")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        if checkable:
+            btn.setCheckable(True)
+        btn.clicked.connect(funcion)
+        return btn
 
-        self.contenedor_gestos = QWidget()
-        self.layout_gestos = QVBoxLayout(self.contenedor_gestos)
-        self.layout_derecho.addWidget(self.contenedor_gestos)
-        self.refrescar_panel_gestos()
+    def resizeEvent(self, event):
+        # Posicionar Dock (Abajo Centro)
+        dock_w = 400
+        dock_h = 60
+        self.dock_widget.setGeometry(
+            (self.width() - dock_w) // 2,
+            self.height() - dock_h - 30,
+            dock_w,
+            dock_h
+        )
+        
+        # Posicionar Sidebar (Derecha, Altura completa)
+        sidebar_w = 300 if self.sidebar_expanded else 0
+        self.sidebar.setGeometry(
+            self.width() - sidebar_w,
+            0,
+            sidebar_w,
+            self.height()
+        )
+        
+        # Posicionar Toast (Arriba Centro)
+        self.toast.setGeometry(
+            (self.width() - 300) // 2,
+            40,
+            300,
+            40
+        )
+        super().resizeEvent(event)
 
-        self.layout_derecho.addStretch(1)
-        linea = QFrame()
-        linea.setFrameShape(QFrame.Shape.HLine)
-        linea.setFrameShadow(QFrame.Shadow.Sunken)
-        self.layout_derecho.addWidget(linea)
+    def toggle_sidebar(self):
+        self.sidebar_expanded = not self.sidebar_expanded
+        # Animación simple
+        width = 250 if self.sidebar_expanded else 0
+        self.sidebar.setFixedWidth(width)
+        # Forzar resize para actualizar geometría
+        self.resizeEvent(None)
 
-        titulo_estado = QLabel("Estado en Vivo")
-        titulo_estado.setObjectName("Subtitulo")
-        self.layout_derecho.addWidget(titulo_estado)
+    def show_toast(self, mensaje):
+        self.toast.setText(mensaje)
+        self.toast.show()
+        self.toast.raise_()
+        self.toast_timer.start(2500) # 2.5 segundos
 
-        self.info_estado = QLabel()
-        self.info_gesto_detectado = QLabel()
-        self.info_feedback = QLabel()
-        for label in [self.info_estado, self.info_gesto_detectado, self.info_feedback]:
-            label.setObjectName("InfoTexto")
-            label.setWordWrap(True)
-            self.layout_derecho.addWidget(label)
+    def ocultar_toast(self):
+        self.toast.hide()
 
-        self.layout_derecho.addStretch(1)
+    def actualizar_feedback_toast(self, estado, gesto, progreso):
+        # Lógica inteligente para no saturar de toasts
+        if gesto != "Desconocido" and gesto != "":
+             # Solo mostrar si es un gesto nuevo o importante
+             pass 
+        
+        # Si hay un cambio de estado importante, mostrar toast
+        if estado == "Confirmado":
+             self.show_toast(f"✅ Gesto Confirmado: {gesto}")
 
-        # --- Botón Iniciar/Finalizar ---
-        self.boton_inicio = QPushButton("📷  INICIAR SISTEMA")
-        self.boton_inicio.setObjectName("BotonAccion")
-        self.boton_inicio.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.boton_inicio.clicked.connect(self.toggle_camara)
-        self.layout_derecho.addWidget(self.boton_inicio)
+    def mostrar_confirmacion_gesto(self, nombre_gesto):
+        self.show_toast(f"🚀 Ejecutando: {nombre_gesto}")
+        self.overlay.mostrar_confirmacion(nombre_gesto)
 
-        # --- Botones secundarios ---
-        layout_botones = QHBoxLayout()
-        boton_ver_todos = QPushButton("👁️  VER GESTOS")
-        boton_modificar = QPushButton("⚙️  CONFIGURAR")
-        self.boton_mouse = QPushButton("🖱️  MOUSE")
-        self.boton_mouse.setCheckable(True)
-
-        for boton in [boton_ver_todos, boton_modificar, self.boton_mouse]:
-            boton.setCursor(Qt.CursorShape.PointingHandCursor)
-            layout_botones.addWidget(boton)
-
-        self.layout_derecho.addLayout(layout_botones)
-
-        boton_ver_todos.clicked.connect(self.abrir_dialogo_lista)
-        boton_modificar.clicked.connect(self.abrir_dialogo_modificar)
-        self.boton_mouse.clicked.connect(self.toggle_mouse_mode)
-
-        self.contenido_layout.addWidget(self.panel_control, 35)
-
-    # =========================
-    #  MÉTODOS DE FUNCIONALIDAD
-    # =========================
     def toggle_camara(self):
-        if not self.vision_activa:
-            # Iniciar cámara
-            self.hilo_vision = MotorVision()
-            self.hilo_vision.cambio_de_frame.connect(self.actualizar_frame)
-            self.hilo_vision.actualizacion_feedback.connect(self.actualizar_feedback_panel)
-            
-            # Conectar señales del Overlay
-            self.hilo_vision.gesto_progreso.connect(lambda p: self.overlay.set_estado("Detectando", p))
-            self.hilo_vision.gesto_confirmado_signal.connect(lambda g: self.overlay.set_estado("Confirmado"))
-            self.hilo_vision.gesto_cancelado_signal.connect(lambda: self.overlay.set_estado("Cancelado"))
-            self.hilo_vision.dwell_progreso.connect(self.overlay.set_dwell_estado)
-            
+        if not self.camara_activa:
             self.hilo_vision.start()
-            self.overlay.showFullScreen()
-            self.vision_activa = True
-
-            self.boton_inicio.setText("🛑  FINALIZAR SISTEMA")
-            self.boton_inicio.setStyleSheet("background-color: #FF1744; color: white; border: none;") 
-            self.etiqueta_video.setText("Iniciando sensores...")
-            self.refrescar_panel_gestos()
+            self.camara_activa = True
+            self.btn_camara.setText("⏹ Detener")
+            self.btn_camara.setChecked(True)
+            self.overlay.show() # Mostrar overlay al iniciar
+            self.show_toast("Cámara Iniciada")
         else:
-            # Detener cámara
-            if self.hilo_vision:
-                self.hilo_vision.stop()
-                self.hilo_vision = None
-            self.vision_activa = False
+            self.hilo_vision.stop()
+            self.camara_activa = False
+            self.video_container.setPixmap(QPixmap())
+            self.video_container.setText("Cámara Inactiva")
+            self.btn_camara.setText("📷 Iniciar")
+            self.btn_camara.setChecked(False)
             self.overlay.hide()
-
-            self.etiqueta_video.clear()
-            self.etiqueta_video.setText("Sistema en espera.")
-            self.etiqueta_video.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.etiqueta_video.setStyleSheet("background-color: black; color: white; font-size: 24px; border: 2px solid #00E5FF; border-radius: 10px;")
-
-            self.boton_inicio.setText("📷  INICIAR SISTEMA")
-            self.boton_inicio.setStyleSheet("")
-            self.refrescar_panel_gestos()
-
-    def refrescar_panel_gestos(self):
-        while self.layout_gestos.count():
-            item = self.layout_gestos.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-
-        try:
-            with open("config.json", "r", encoding="utf-8") as f:
-                config = json.load(f)
-                gestos_a_mostrar = random.sample(config["gestos"][1:-2], min(3, len(config["gestos"])))
-                for gesto in gestos_a_mostrar:
-                    nombre_gesto = gesto["nombre"]
-                    descripcion_gesto = config["acciones"][gesto["accion"]]["descripcion"]
-                    label_gesto = QLabel(f"▪ {gesto.get('emoji', '')} {nombre_gesto}\n    > {descripcion_gesto}")
-                    label_gesto.setObjectName("InfoTexto")
-                    label_gesto.setWordWrap(True)
-                    self.layout_gestos.addWidget(label_gesto)
-        except Exception as e:
-            self.layout_gestos.addWidget(QLabel(f"Error: {e}"))
-
-    def abrir_dialogo_lista(self):
-        try:
-            with open("config.json", "r", encoding="utf-8") as f:
-                config = json.load(f)
-                gestos = config["gestos"]
-                acciones = config["acciones"]
-            dialogo = DialogoListaGestos(gestos, acciones, self)
-            dialogo.exec()
-        except Exception as e:
-            print(f"Error al abrir la lista de gestos: {e}")
-
-    def abrir_dialogo_modificar(self):
-        try:
-            with open("config.json", "r", encoding="utf-8") as f:
-                config = json.load(f)
-            dialogo = DialogoModificar(config, self)
-            if dialogo.exec():
-                config["gestos"] = dialogo.obtener_config_actualizada()
-                with open("config.json", "w", encoding="utf-8") as f:
-                    json.dump(config, f, indent=2, ensure_ascii=False)
-                self.refrescar_panel_gestos()
-        except Exception as e:
-            print(f"Error al abrir el diálogo de modificación: {e}")
+            self.show_toast("Cámara Detenida")
 
     def toggle_mouse_mode(self):
-        if self.hilo_vision and self.vision_activa:
-            modo_activo = self.hilo_vision.toggle_modo_mouse()
-            if modo_activo:
-                self.boton_mouse.setText("🖱️  MOUSE ACTIVO")
-                self.boton_mouse.setStyleSheet("background-color: #00E5FF; color: #121212; border: 2px solid #FFFFFF;")
-                self.overlay.set_estado("Modo Mouse")
-            else:
-                self.boton_mouse.setText("🖱️  MOUSE")
-                self.boton_mouse.setStyleSheet("") # Restaurar estilo default
-                self.overlay.set_estado("Esperando")
+        if not self.camara_activa:
+            self.show_toast("⚠️ Enciende la cámara primero")
+            self.btn_mouse.setChecked(False)
+            return
+
+        activo = self.hilo_vision.toggle_modo_mouse()
+        self.modo_mouse_activo = activo
+        self.btn_mouse.setChecked(activo)
+        
+        if activo:
+            self.show_toast("🖱️ Modo Mouse: ACTIVO")
+            self.overlay.mostrar_mensaje_centro("MODO MOUSE")
         else:
-            self.boton_mouse.setChecked(False)
-            self.info_estado.setText("Error: Inicia la cámara primero")
+            self.show_toast("✋ Modo Gestos: ACTIVO")
+            self.overlay.mostrar_mensaje_centro("MODO GESTOS")
 
-    def actualizar_feedback_panel(self, estado, gesto, feedback):
-        self.info_estado.setText(f"<b>Estado:</b> {estado}")
-        self.info_gesto_detectado.setText(f"<b>Detectando:</b> {gesto}")
-        self.info_feedback.setText(f"<b>Feedback:</b> {feedback}")
-
-    def actualizar_frame(self, frame_cv_bgr):
-        frame_rgb = cv2.cvtColor(frame_cv_bgr, cv2.COLOR_BGR2RGB)
-        h, w, ch = frame_rgb.shape
-        bytes_por_linea = ch * w
-        imagen_qt = QImage(frame_rgb.data, w, h, bytes_por_linea, QImage.Format.Format_RGB888)
-        pixmap = QPixmap.fromImage(imagen_qt)
-        pixmap_escalado = pixmap.scaled(
-            self.etiqueta_video.size(),
+    def actualizar_imagen(self, frame):
+        # Escalar frame al tamaño del contenedor manteniendo aspecto
+        h, w, ch = frame.shape
+        bytes_per_line = ch * w
+        qt_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+        pixmap = QPixmap.fromImage(qt_img)
+        
+        # Escalar al tamaño del video_container
+        scaled_pixmap = pixmap.scaled(
+            self.video_container.size(),
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation
         )
-        self.etiqueta_video.setPixmap(pixmap_escalado)
+        self.video_container.setPixmap(scaled_pixmap)
 
-    def close_event(self, event):
+    def construir_sidebar_gestos(self):
+        """Construye la lista de gestos con ComboBoxes dinámicamente."""
+        # Limpiar layout anterior si existe
+        while self.scroll_layout.count():
+            child = self.scroll_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        # Cargar config actual
+        try:
+            with open('config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except:
+            config = {"acciones": [], "gestos": []}
+
+        self.combos_gestos = {} # Para guardar referencias a los combos
+
+        acciones_disponibles = [a["nombre"] for a in config["acciones"]]
+
+        for gesture in config["gestos"]:
+            # Contenedor por fila
+            row_widget = QWidget()
+            row_layout = QVBoxLayout(row_widget)
+            row_layout.setContentsMargins(0,0,0,0)
+            row_layout.setSpacing(5)
+            
+            # Etiqueta: Emoji + Nombre
+            lbl = QLabel(f"{gesture['emoji']} {gesture['nombre']}")
+            lbl.setStyleSheet("color: white; font-weight: bold; font-size: 14px;")
+            row_layout.addWidget(lbl)
+            
+            # ComboBox de Acciones
+            combo = QComboBox()
+            combo.addItems(acciones_disponibles)
+            
+            # Seleccionar acción actual por NOMBRE
+            accion_actual_nombre = gesture.get("accion_nombre", "Ninguna")
+            index = combo.findText(accion_actual_nombre)
+            if index >= 0:
+                combo.setCurrentIndex(index)
+            
+            # Estilo del ComboBox
+            combo.setStyleSheet("""
+                QComboBox {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 5px;
+                    padding: 5px;
+                }
+                QComboBox::drop-down { border: none; }
+                QComboBox QAbstractItemView {
+                    background-color: #2d2d2d;
+                    color: white;
+                    selection-background-color: #00e5ff;
+                }
+            """)
+            
+            row_layout.addWidget(combo)
+            self.scroll_layout.addWidget(row_widget)
+            
+            # Guardar referencia: nombre_gesto -> combo
+            self.combos_gestos[gesture["nombre"]] = combo
+
+        self.scroll_layout.addStretch()
+
+    def guardar_configuracion(self):
+        """Guarda la configuración actual de los combos en el JSON."""
+        try:
+            with open('config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Actualizar acciones en la config
+            acciones_nombres = [a["nombre"] for a in config["acciones"]]
+            
+            for gesture in config["gestos"]:
+                nombre = gesture["nombre"]
+                if nombre in self.combos_gestos:
+                    combo = self.combos_gestos[nombre]
+                    nuevo_nombre_accion = combo.currentText()
+                    gesture["accion_nombre"] = nuevo_nombre_accion
+                    # Eliminamos 'accion' si existe para limpiar
+                    if "accion" in gesture:
+                        del gesture["accion"]
+            
+            # Guardar en archivo
+            with open('config.json', 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            # Notificar al motor de visión para recargar
+            self.hilo_vision.cargar_configuracion()
+            
+            self.show_toast("✅ Configuración Guardada")
+            
+        except Exception as e:
+            print(f"Error guardando config: {e}")
+            self.show_toast("❌ Error al guardar")
+
+    def closeEvent(self, event):
         if self.hilo_vision:
             self.hilo_vision.stop()
-        self.overlay.close()
         event.accept()
 
 if __name__ == "__main__":
