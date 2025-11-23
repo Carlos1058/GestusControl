@@ -221,7 +221,9 @@ class MotorVision(QThread):
             # --- DIBUJAR HUD CYBERPUNK ---
             self.dibujar_hud(frame)
 
-            self.cambio_de_frame.emit(frame)
+            # Convertir a RGB para mostrar en Qt (que espera RGB)
+            frame_final = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            self.cambio_de_frame.emit(frame_final)
             
             # Feedback de texto
             if self.modo_mouse:
