@@ -12,9 +12,9 @@ from tutorial_system import TutorialManager
 class GestusApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("GestusControl V2.0")
+        self.setWindowTitle("GestusControl")
         self.setGeometry(100, 100, 1280, 720)
-        
+
         # Cargar estilos
         try:
             with open("styles.qss", "r") as f:
@@ -48,18 +48,17 @@ class GestusApp(QMainWindow):
         self.tutorial.sig_resaltar_ui.connect(self.resaltar_widget)
         self.tutorial.sig_tutorial_finalizado.connect(self.on_tutorial_finalizado)
 
-
     def setup_ui_v2(self):
         """Configura la interfaz moderna con Dock y Sidebar."""
         # Widget central que contiene todo (Overlay Layout)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
+
         # Layout principal: Stacked para poner UI sobre Video, o Absolute
         # Usaremos un layout principal con márgenes 0 y un overlay manual
         self.main_layout = QVBoxLayout(central_widget)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
-        
+
         # 1. Contenedor de Video (Fondo)
         self.video_container = QLabel("Cámara Inactiva")
         self.video_container.setObjectName("VideoContainer")
@@ -70,9 +69,9 @@ class GestusApp(QMainWindow):
 
         # 2. Overlay Visual (Transparente, encima del video)
         # Nota: En esta arquitectura simplificada, el OverlayVisual se pinta SOBRE el video_container
-        # o usamos una ventana transparente separada. Por simplicidad y robustez, usaremos 
+        # o usamos una ventana transparente separada. Por simplicidad y robustez, usaremos
         # el OverlayVisual como un widget hijo del video_container o encima de él.
-        # Para V2, mantendremos el OverlayVisual como ventana independiente 'AlwaysOnTop' 
+        # Para V2, mantendremos el OverlayVisual como ventana independiente 'AlwaysOnTop'
         # controlada por app.py, ya que funcionó bien para el Dwell Click.
         self.overlay = OverlayVisual()
         # El overlay se posicionará dinámicamente sobre el video_container en resizeEvent si quisiéramos,
@@ -90,12 +89,14 @@ class GestusApp(QMainWindow):
         self.btn_camara = self.crear_boton_dock("📷 Iniciar", self.toggle_camara)
         self.btn_mouse = self.crear_boton_dock("🖱️ Mouse", self.toggle_mouse_mode, checkable=True)
         self.btn_menu = self.crear_boton_dock("⚙️ Gestos", self.toggle_sidebar, checkable=True)
+        self.btn_tutorial = self.crear_boton_dock("🎓 Tutorial", self.iniciar_tutorial)
         self.btn_salir = self.crear_boton_dock("❌ Salir", self.close)
         self.btn_salir.setObjectName("ExitButton")
 
         dock_layout.addWidget(self.btn_camara)
         dock_layout.addWidget(self.btn_mouse)
         dock_layout.addWidget(self.btn_menu)
+        dock_layout.addWidget(self.btn_tutorial)
         dock_layout.addWidget(self.btn_salir)
 
         # 4. Sidebar (Derecha)
@@ -104,27 +105,27 @@ class GestusApp(QMainWindow):
         self.sidebar.setFixedWidth(0) # Inicialmente colapsado
         sidebar_layout = QVBoxLayout(self.sidebar)
         sidebar_layout.setContentsMargins(10, 20, 10, 20)
-        
+
         lbl_gestos = QLabel("Configuración de Gestos")
         lbl_gestos.setObjectName("SidebarHeader")
         sidebar_layout.addWidget(lbl_gestos)
-        
+
         # Scroll Area para los gestos
         from PyQt6.QtWidgets import QScrollArea
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("background: transparent; border: none;")
-        
+
         scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(scroll_content)
         self.scroll_layout.setSpacing(15)
-        
+
         scroll.setWidget(scroll_content)
         sidebar_layout.addWidget(scroll)
-        
+
         # Construir la lista de gestos dinámicamente
         self.construir_sidebar_gestos()
-            
+
         # Botón Guardar
         btn_guardar = QPushButton("💾 Guardar Cambios")
         btn_guardar.setObjectName("ActionBtn")
@@ -132,14 +133,6 @@ class GestusApp(QMainWindow):
         btn_guardar.clicked.connect(self.guardar_configuracion)
         btn_guardar.clicked.connect(self.guardar_configuracion)
         sidebar_layout.addWidget(btn_guardar)
-
-        # Botón Tutorial (Nuevo)
-        btn_tutorial = QPushButton("🎓 Iniciar Tutorial")
-        btn_tutorial.setObjectName("ActionBtn")
-        btn_tutorial.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_tutorial.clicked.connect(self.iniciar_tutorial)
-        sidebar_layout.addWidget(btn_tutorial)
-
 
         # 5. Toast Notification (Arriba Centro)
         self.toast = QLabel(self)
@@ -161,7 +154,7 @@ class GestusApp(QMainWindow):
 
     def resizeEvent(self, event):
         # Posicionar Dock (Abajo Centro)
-        dock_w = 400
+        dock_w = 570
         dock_h = 60
         self.dock_widget.setGeometry(
             (self.width() - dock_w) // 2,
@@ -169,7 +162,7 @@ class GestusApp(QMainWindow):
             dock_w,
             dock_h
         )
-        
+
         # Posicionar Sidebar (Derecha, Altura completa)
         sidebar_w = 300 if self.sidebar_expanded else 0
         self.sidebar.setGeometry(
@@ -178,12 +171,12 @@ class GestusApp(QMainWindow):
             sidebar_w,
             self.height()
         )
-        
+
         # Posicionar Toast (Arriba Centro)
         self.toast.setGeometry(
-            (self.width() - 300) // 2,
+            (self.width() - 400) // 2,
             40,
-            300,
+            400,
             40
         )
         super().resizeEvent(event)
@@ -208,12 +201,12 @@ class GestusApp(QMainWindow):
     def actualizar_feedback_toast(self, estado, gesto, progreso):
         # Lógica inteligente para no saturar de toasts
         if gesto != "Desconocido" and gesto != "":
-             # Solo mostrar si es un gesto nuevo o importante
-             pass 
-        
+            # Solo mostrar si es un gesto nuevo o importante
+            pass 
+
         # Si hay un cambio de estado importante, mostrar toast
         if estado == "Confirmado":
-             self.show_toast(f"✅ Gesto Confirmado: {gesto}")
+            self.show_toast(f"✅ Gesto Confirmado: {gesto}")
 
     def mostrar_confirmacion_gesto(self, nombre_gesto):
         self.show_toast(f"🚀 Ejecutando: {nombre_gesto}")
@@ -271,7 +264,7 @@ class GestusApp(QMainWindow):
                 font-size: 12px;
             }
         """
-        
+
         widgets = {
             "btn_camara": self.btn_camara,
             "btn_mouse": self.btn_mouse,
@@ -288,7 +281,6 @@ class GestusApp(QMainWindow):
 
         if nombre_widget in widgets:
             widgets[nombre_widget].setStyleSheet(estilo_resaltado)
-
 
     def toggle_camara(self):
         if not self.camara_activa:
@@ -319,7 +311,7 @@ class GestusApp(QMainWindow):
         activo = self.hilo_vision.toggle_modo_mouse()
         self.modo_mouse_activo = activo
         self.btn_mouse.setChecked(activo)
-        
+
         if activo:
             self.show_toast("🖱️ Modo Mouse: ACTIVO")
             self.overlay.mostrar_mensaje_centro("MODO MOUSE")
@@ -335,7 +327,7 @@ class GestusApp(QMainWindow):
         bytes_per_line = ch * w
         qt_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_img)
-        
+
         # Escalar al tamaño del video_container
         scaled_pixmap = pixmap.scaled(
             self.video_container.size(),
@@ -369,42 +361,47 @@ class GestusApp(QMainWindow):
             row_layout = QVBoxLayout(row_widget)
             row_layout.setContentsMargins(0,0,0,0)
             row_layout.setSpacing(5)
-            
+
             # Etiqueta: Emoji + Nombre
             lbl = QLabel(f"{gesture['emoji']} {gesture['nombre']}")
             lbl.setStyleSheet("color: white; font-weight: bold; font-size: 14px;")
             row_layout.addWidget(lbl)
-            
+
             # ComboBox de Acciones
             combo = QComboBox()
             combo.addItems(acciones_disponibles)
-            
+
             # Seleccionar acción actual por NOMBRE
             accion_actual_nombre = gesture.get("accion_nombre", "Ninguna")
             index = combo.findText(accion_actual_nombre)
             if index >= 0:
                 combo.setCurrentIndex(index)
-            
+
             # Estilo del ComboBox
-            combo.setStyleSheet("""
+            combo.setStyleSheet(
+                """
                 QComboBox {
                     background-color: rgba(255, 255, 255, 0.1);
                     color: white;
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 5px;
                     padding: 5px;
+                    font-size: 14px;
                 }
                 QComboBox::drop-down { border: none; }
                 QComboBox QAbstractItemView {
                     background-color: #2d2d2d;
                     color: white;
-                    selection-background-color: #00e5ff;
+                }
+                
+                QComboBox QAbstractItemView::item:hover {
+                    background-color: rgba(0, 229, 255, 100);
                 }
             """)
-            
+
             row_layout.addWidget(combo)
             self.scroll_layout.addWidget(row_widget)
-            
+
             # Guardar referencia: nombre_gesto -> combo
             self.combos_gestos[gesture["nombre"]] = combo
 
@@ -415,10 +412,10 @@ class GestusApp(QMainWindow):
         try:
             with open('config.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
-            
+
             # Actualizar acciones en la config
             acciones_nombres = [a["nombre"] for a in config["acciones"]]
-            
+
             for gesture in config["gestos"]:
                 nombre = gesture["nombre"]
                 if nombre in self.combos_gestos:
@@ -428,16 +425,16 @@ class GestusApp(QMainWindow):
                     # Eliminamos 'accion' si existe para limpiar
                     if "accion" in gesture:
                         del gesture["accion"]
-            
+
             # Guardar en archivo
             with open('config.json', 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
-            
+
             # Notificar al motor de visión para recargar
             self.hilo_vision.cargar_configuracion()
-            
+
             self.show_toast("✅ Configuración Guardada")
-            
+
         except Exception as e:
             print(f"Error guardando config: {e}")
             self.show_toast("❌ Error al guardar")

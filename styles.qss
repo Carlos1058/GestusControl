@@ -7,7 +7,7 @@ QMainWindow {
 QLabel {
     color: #ffffff;
     font-family: 'Segoe UI', 'Roboto', sans-serif;
-    font-size: 14px;
+    font-size: 18px;
 }
 
 /* Floating Dock (Glass Effect) */
@@ -18,17 +18,21 @@ QLabel {
 }
 
 /* Dock Buttons */
-QPushButton#DockButton {
+QPushButton#DockButton, QPushButton#ActionBtn, QPushButton#ExitButton {
     background-color: transparent;
     border: none;
     border-radius: 10px;
     padding: 10px;
     color: white;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 14px;
 }
 
-QPushButton#DockButton:hover {
+QPushButton#ActionBtn, QPushButton#ExitButton {
+    background-color: rgba(255, 255, 255, 20);
+}
+
+QPushButton#DockButton:hover, QPushButton#ActionBtn:hover {
     background-color: rgba(255, 255, 255, 20);
     border: 1px solid rgba(0, 229, 255, 100); /* Cyan glow */
 }
@@ -39,7 +43,7 @@ QPushButton#DockButton:checked {
     color: #00e5ff;
 }
 
-QPushButton#DockButton#ExitButton:hover {
+QPushButton#ExitButton:hover {
     background-color: rgba(255, 50, 50, 50);
     border: 1px solid #ff3232;
 }
@@ -73,4 +77,13 @@ QLabel#SidebarHeader {
     background-color: #000000;
     border: 2px solid rgba(0, 229, 255, 50);
     border-radius: 15px;
+}
+
+
+
+/* Nuevo estilo para el tutorial (Verde) */
+QPushButton[tutorial_resaltado="true"] {
+    background-color: rgba(60, 200, 60, 50); /* Fondo verdoso */
+    border: 3px solid #32CD32; /* Borde verde fuerte */
+    border-radius: 10px;
 }

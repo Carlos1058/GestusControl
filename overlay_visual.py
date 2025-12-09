@@ -103,13 +103,13 @@ class OverlayVisual(QWidget):
         self.set_estado("Confirmado")
         # Aquí podríamos dibujar el nombre del gesto en el centro si quisiéramos
         self.mensaje_centro = nombre_gesto
-        self.tiempo_mensaje = 50 # frames
+        self.tiempo_mensaje = 150 # frames
         self.update()
 
     def mostrar_mensaje_centro(self, mensaje):
         """Muestra un mensaje temporal en el centro."""
         self.mensaje_centro = mensaje
-        self.tiempo_mensaje = 50
+        self.tiempo_mensaje = 150
         self.update()
 
     def paintEvent(self, event):
