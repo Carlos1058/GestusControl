@@ -27,7 +27,22 @@ def identificar_gestos(mano_landmarks):
     pulgar_afuera = puntos[4].x < puntos[2].x if puntos[4].x < puntos[17].x else puntos[4].x > puntos[2].x
 
 
-    # --- Evaluación de Gestos Específicos ---
+    # --- Evaluación de Gestos Específicos (PRIORIDAD ALTA) ---
+    
+    # Gesto CRUZADO (Dedos índice y medio cruzados) - Prioridad sobre Paz
+    if indice_estirado and medio_estirado:
+        # Distancia horizontal entre puntas muy pequeña o negativa si se cruzan
+        distancia_cruz = abs(puntos[8].x - puntos[12].x)
+        # Si están muy cerca, probablemente están cruzados
+        if distancia_cruz < 0.05: 
+             return "Cruzado"
+
+    # Gesto OK (Punta del índice y pulgar se tocan) - Prioridad sobre otros
+    distancia_ok = ((puntos[8].x - puntos[4].x)**2 + (puntos[8].y - puntos[4].y)**2)**0.5
+    if distancia_ok < 0.05 and medio_estirado and anular_estirado and menique_estirado:
+        return "Ok"
+
+    # --- Evaluación de Gestos Generales ---
 
     # Gesto LIKE (Pulgar arriba, resto cerrado)
     if pulgar_arriba and indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado:
@@ -42,6 +57,7 @@ def identificar_gestos(mano_landmarks):
         return "Puno cerrado"
         
     # Gesto PAZ (Índice y medio estirados, resto cerrado)
+    # Se evalúa DESPUÉS de Cruzado
     if indice_estirado and medio_estirado and anular_cerrado and menique_cerrado:
         return "Paz"
 
@@ -56,19 +72,6 @@ def identificar_gestos(mano_landmarks):
     # Gesto PULGAR_ABAJO (Pulgar abajo, resto cerrado)
     if pulgar_abajo and indice_cerrado and medio_cerrado and anular_cerrado and menique_cerrado:
         return "Pulgar abajo"
-
-    # Gesto OK (Punta del índice y pulgar se tocan, resto estirado)
-    # (Calculamos la distancia entre las puntas de los dedos)
-    distancia_ok = ((puntos[8].x - puntos[4].x)**2 + (puntos[8].y - puntos[4].y)**2)**0.5
-    if distancia_ok < 0.05 and medio_estirado and anular_estirado and menique_estirado:
-        return "Ok"
-
-    # Gesto CRUZADO (Dedos índice y medio cruzados)
-    if indice_estirado and medio_estirado and anular_cerrado and menique_cerrado:
-        # Distancia entre puntas muy pequeña
-        distancia_cruz = abs(puntos[8].x - puntos[12].x)
-        if distancia_cruz < 0.04: 
-             return "Cruzado"
 
     # Gesto INDICE ARRIBA (Solo índice estirado, pulgar cerrado)
     if indice_estirado and medio_cerrado and anular_cerrado and menique_cerrado and not pulgar_afuera:

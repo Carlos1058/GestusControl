@@ -47,33 +47,40 @@
     {
       "nombre": "Silenciar volumen",
       "descripcion": "Silencia o activa el sonido del sistema."
+    },
+    {
+      "nombre": "Siguiente Cancion",
+      "descripcion": "Salta a la siguiente pista multimedia."
+    },
+    {
+      "nombre": "Pausar/Reproducir",
+      "descripcion": "Pausa o reproduce el contenido multimedia."
+    },
+    {
+      "nombre": "Cambiar Pestana",
+      "descripcion": "Cambia a la siguiente pestaña del navegador (Ctrl+Tab)."
     }
   ],
   "gestos": [
     {
       "nombre": "Like",
       "emoji": "👍🏻",
-      "accion_nombre": "Confirmar"
+      "accion_nombre": "Siguiente Cancion"
     },
     {
       "nombre": "Mano abierta",
       "emoji": "🖐🏻",
-      "accion_nombre": "Abrir YouTube"
+      "accion_nombre": "Pausar/Reproducir"
     },
     {
       "nombre": "Puno cerrado",
       "emoji": "✊🏻",
-      "accion_nombre": "Abrir YouTube"
-    },
-    {
-      "nombre": "Apuntar",
-      "emoji": "👉🏻",
-      "accion_nombre": "Ninguna"
+      "accion_nombre": "Abrir menu de inicio"
     },
     {
       "nombre": "Paz",
       "emoji": "✌🏻",
-      "accion_nombre": "Abrir menu de inicio"
+      "accion_nombre": "Cambiar Pestana"
     },
     {
       "nombre": "Cuernos",
@@ -93,17 +100,17 @@
     {
       "nombre": "Ok",
       "emoji": "👌🏻",
-      "accion_nombre": "Ninguna"
+      "accion_nombre": "Abrir calculadora"
     },
     {
       "nombre": "Cruzado",
       "emoji": "🤞🏻",
-      "accion_nombre": "Abrir calculadora"
+      "accion_nombre": "Abrir Wikipedia"
     },
     {
       "nombre": "Indice Arriba",
       "emoji": "☝🏻",
-      "accion_nombre": "Ninguna"
+      "accion_nombre": "Subir brillo"
     }
   ]
 }

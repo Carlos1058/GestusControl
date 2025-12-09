@@ -82,8 +82,9 @@ class TutorialManager(QObject):
             
         elif paso == "PRUEBA_GESTO_2":
             self.gesto_objetivo_actual = "Like"
-            self.sig_actualizar_instruccion.emit("PRUEBA 2", f"Haz un 'Like' 👍\nEsto confirma acciones.")
+            self.sig_actualizar_instruccion.emit("PRUEBA 2", f"Haz un 'Like' 👍\nEsto cambia de canción.")
             self.sig_resaltar_ui.emit("")
+
             
         elif paso == "INFO_PERSONALIZACION":
             self.sig_actualizar_instruccion.emit("PERSONALIZACIÓN", "Puedes cambiar qué hace cada gesto\nen el menú de configuración.")

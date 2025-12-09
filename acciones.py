@@ -72,6 +72,22 @@ def silenciar_volumen():
     print("ACCIÓN: Silenciando volumen...")
     pyautogui.press('volumemute')
 
+def siguiente_cancion():
+    """Salta a la siguiente canción en reproductores multimedia."""
+    print("ACCIÓN: Siguiente Canción...")
+    pyautogui.press('nexttrack')
+
+def pausar_musica():
+    """Pausa o reproduce multimedia."""
+    print("ACCIÓN: Pausar/Reproducir...")
+    pyautogui.press('playpause')
+
+def cambiar_pestana():
+    """Alterna entre pestañas (Ctrl + Tab)."""
+    print("ACCIÓN: Cambiando Pestaña...")
+    pyautogui.hotkey('ctrl', 'tab')
+
+
 
 # --- Mapa de Acciones Actualizado ---
 # Este diccionario conecta los strings del JSON con las funciones reales.
@@ -87,4 +103,7 @@ MAPA_ACCIONES = {
     "Subir volumen": subir_volumen,
     "Bajar volumen": bajar_volumen,
     "Silenciar volumen": silenciar_volumen,
+    "Siguiente Cancion": siguiente_cancion,
+    "Pausar/Reproducir": pausar_musica,
+    "Cambiar Pestana": cambiar_pestana,
 }
