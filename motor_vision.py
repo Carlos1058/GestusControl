@@ -14,6 +14,8 @@ class MotorVision(QThread):
     gesto_progreso = pyqtSignal(float)      # 0.0 a 1.0
     gesto_confirmado_signal = pyqtSignal(str) # Nombre del gesto confirmado
     gesto_cancelado_signal = pyqtSignal()
+    mano_detectada = pyqtSignal() # Nueva señal para tutorial
+
     
     # Señal para Dwell Click
     dwell_progreso = pyqtSignal(float, int, int) # Progreso (0-1), X, Y
@@ -79,7 +81,9 @@ class MotorVision(QThread):
             es_gesto_valido = False
             
             if resultados.multi_hand_landmarks:
+                self.mano_detectada.emit() # Notificar detección
                 for mano_landmarks in resultados.multi_hand_landmarks:
+
                     self.mp_dibujo.draw_landmarks(frame, mano_landmarks, self.mp_manos.HAND_CONNECTIONS)
                     
                     if self.modo_mouse:

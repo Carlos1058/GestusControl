@@ -141,6 +141,7 @@ class OverlayVisual(QWidget):
             angulo_span = int(360 * 16 * self.dwell_progreso)
             painter.drawArc(self.dwell_x - radio, self.dwell_y - radio, radio * 2, radio * 2, 90 * 16, -angulo_span)
 
+
         # 3. Dibujar Mensaje Central (si existe)
         if hasattr(self, 'mensaje_centro') and self.mensaje_centro and getattr(self, 'tiempo_mensaje', 0) > 0:
             self.tiempo_mensaje -= 1
@@ -155,6 +156,41 @@ class OverlayVisual(QWidget):
                 self.update()
             else:
                 self.update() # Seguir animando
+
+        # 4. Dibujar Tutorial (Instrucciones)
+        if hasattr(self, 'tutorial_titulo') and self.tutorial_titulo:
+            # Fondo semitransparente para legibilidad
+            bg_rect = self.rect()
+            # Un overlay oscuro sutil
+            painter.fillRect(bg_rect, QColor(0, 0, 0, 100))
+            
+            # Titulo
+            painter.setPen(QColor(0, 229, 255)) # Cyan
+            font_title = painter.font()
+            font_title.setPointSize(32)
+            font_title.setBold(True)
+            painter.setFont(font_title)
+            
+            # Posición superior
+            rect_titulo = self.rect().adjusted(0, 100, 0, 0)
+            painter.drawText(rect_titulo, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter, self.tutorial_titulo)
+            
+            # Instrucción
+            if hasattr(self, 'tutorial_instruccion') and self.tutorial_instruccion:
+                painter.setPen(QColor(255, 255, 255))
+                font_inst = painter.font()
+                font_inst.setPointSize(18)
+                painter.setFont(font_inst)
+                
+                rect_inst = self.rect().adjusted(0, 160, 0, 0)
+                painter.drawText(rect_inst, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter, self.tutorial_instruccion)
+
+    def set_tutorial_info(self, titulo, instruccion):
+        """Muestra información del tutorial en pantalla."""
+        self.tutorial_titulo = titulo
+        self.tutorial_instruccion = instruccion
+        self.update()
+
 
 if __name__ == "__main__":
     # Test rápido

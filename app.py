@@ -7,6 +7,7 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtCore import Qt, QTimer
 from motor_vision import MotorVision
 from overlay_visual import OverlayVisual
+from tutorial_system import TutorialManager
 
 class GestusApp(QMainWindow):
     def __init__(self):
@@ -37,6 +38,16 @@ class GestusApp(QMainWindow):
         self.hilo_vision.gesto_confirmado_signal.connect(self.mostrar_confirmacion_gesto)
         self.hilo_vision.gesto_cancelado_signal.connect(self.overlay.reset_progreso)
         self.hilo_vision.dwell_progreso.connect(self.overlay.set_dwell_estado)
+        self.hilo_vision.gesto_confirmado_signal.connect(self.on_gesto_confirmado) # Modificado
+        self.hilo_vision.mano_detectada.connect(self.on_mano_detectada)
+
+        # Tutorial System
+        self.tutorial = TutorialManager()
+
+        self.tutorial.sig_actualizar_instruccion.connect(self.overlay.set_tutorial_info)
+        self.tutorial.sig_resaltar_ui.connect(self.resaltar_widget)
+        self.tutorial.sig_tutorial_finalizado.connect(self.on_tutorial_finalizado)
+
 
     def setup_ui_v2(self):
         """Configura la interfaz moderna con Dock y Sidebar."""
@@ -119,7 +130,16 @@ class GestusApp(QMainWindow):
         btn_guardar.setObjectName("ActionBtn")
         btn_guardar.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_guardar.clicked.connect(self.guardar_configuracion)
+        btn_guardar.clicked.connect(self.guardar_configuracion)
         sidebar_layout.addWidget(btn_guardar)
+
+        # Botón Tutorial (Nuevo)
+        btn_tutorial = QPushButton("🎓 Iniciar Tutorial")
+        btn_tutorial.setObjectName("ActionBtn")
+        btn_tutorial.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_tutorial.clicked.connect(self.iniciar_tutorial)
+        sidebar_layout.addWidget(btn_tutorial)
+
 
         # 5. Toast Notification (Arriba Centro)
         self.toast = QLabel(self)
@@ -199,6 +219,77 @@ class GestusApp(QMainWindow):
         self.show_toast(f"🚀 Ejecutando: {nombre_gesto}")
         self.overlay.mostrar_confirmacion(nombre_gesto)
 
+    def on_gesto_confirmado(self, nombre_gesto):
+        """Wrapper para manejar lógica extra al confirmar gesto."""
+        self.mostrar_confirmacion_gesto(nombre_gesto)
+        self.tutorial.evento_gesto_reconocido(nombre_gesto)
+
+    def on_mano_detectada(self):
+        self.tutorial.evento_mano_detectada()
+
+    def iniciar_tutorial(self):
+
+        self.toggle_sidebar() # Cerrar sidebar
+        self.tutorial.iniciar()
+
+    def on_tutorial_finalizado(self):
+        self.show_toast("🎓 Tutorial Completado")
+
+    def resaltar_widget(self, nombre_widget):
+        """
+        Resalta un widget por nombre para guiar al usuario.
+        Si nombre_widget es vacío, limpia resaltados.
+        """
+        estilo_normal = """
+            QPushButton#DockButton {
+                background-color: transparent;
+                border: none;
+                border-radius: 10px;
+                padding: 10px;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton#DockButton:hover {
+                background-color: rgba(255, 255, 255, 20);
+                border: 1px solid rgba(0, 229, 255, 100);
+            }
+            QPushButton#DockButton:checked {
+                background-color: rgba(0, 229, 255, 50);
+                border: 1px solid #00e5ff;
+                color: #00e5ff;
+            }
+        """
+        estilo_resaltado = """
+            QPushButton#DockButton {
+                background-color: rgba(0, 229, 255, 20);
+                border: 2px solid #00e5ff;
+                border-radius: 10px;
+                padding: 10px;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            }
+        """
+        
+        widgets = {
+            "btn_camara": self.btn_camara,
+            "btn_mouse": self.btn_mouse,
+            "btn_menu": self.btn_menu
+        }
+
+        # Primero limpiar todos
+        for w in widgets.values():
+            # Esto es un hack simple, idealmente usaríamos qss dinámico o clases
+            # Pero dado que el qss carga al inicio, aquí forzamos estilos locales
+            # que tienen prioridad.
+            # Para 'limpiar', removemos el estilo local para que use el de la hoja de estilos global.
+            w.setStyleSheet("") 
+
+        if nombre_widget in widgets:
+            widgets[nombre_widget].setStyleSheet(estilo_resaltado)
+
+
     def toggle_camara(self):
         if not self.camara_activa:
             self.hilo_vision.start()
@@ -207,6 +298,8 @@ class GestusApp(QMainWindow):
             self.btn_camara.setChecked(True)
             self.overlay.show() # Mostrar overlay al iniciar
             self.show_toast("Cámara Iniciada")
+            self.tutorial.evento_camara_encendida()
+
         else:
             self.hilo_vision.stop()
             self.camara_activa = False
@@ -230,6 +323,8 @@ class GestusApp(QMainWindow):
         if activo:
             self.show_toast("🖱️ Modo Mouse: ACTIVO")
             self.overlay.mostrar_mensaje_centro("MODO MOUSE")
+            self.tutorial.evento_mouse_activado()
+
         else:
             self.show_toast("✋ Modo Gestos: ACTIVO")
             self.overlay.mostrar_mensaje_centro("MODO GESTOS")
