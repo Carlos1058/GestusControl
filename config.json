@@ -17,8 +17,8 @@
       "descripcion": "Abre la calculadora del sistema."
     },
     {
-      "nombre": "Abrir Wikipedia",
-      "descripcion": "Abre Wikipedia en el navegador."
+      "nombre": "Abrir Google",
+      "descripcion": "Abre Google en el navegador."
     },
     {
       "nombre": "Abrir menu de inicio",
@@ -59,6 +59,14 @@
     {
       "nombre": "Cambiar Pestana",
       "descripcion": "Cambia a la siguiente pestaña del navegador (Ctrl+Tab)."
+    },
+    {
+      "nombre": "Cambiar Programa",
+      "descripcion": "Cambia a la siguiente pestaña del sistema (Alt+Tab)."
+    },
+    {
+      "nombre": "Alternar Modo Mouse/Gestos",
+      "descripcion": "Cambia entre el control de mouse y la ejecución de gestos."
     }
   ],
   "gestos": [
@@ -70,7 +78,7 @@
     {
       "nombre": "Mano abierta",
       "emoji": "🖐🏻",
-      "accion_nombre": "Pausar/Reproducir"
+      "accion_nombre": "Cambiar Programa"
     },
     {
       "nombre": "Puno cerrado",
@@ -90,7 +98,7 @@
     {
       "nombre": "Llamame",
       "emoji": "🤙🏻",
-      "accion_nombre": "Activar Cortana"
+      "accion_nombre": "Ninguna"
     },
     {
       "nombre": "Pulgar abajo",
@@ -105,7 +113,7 @@
     {
       "nombre": "Cruzado",
       "emoji": "🤞🏻",
-      "accion_nombre": "Abrir Wikipedia"
+      "accion_nombre": "Abrir Google"
     },
     {
       "nombre": "Indice Arriba",

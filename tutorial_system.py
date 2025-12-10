@@ -5,6 +5,7 @@ class TutorialManager(QObject):
     Gestiona los estados y el flujo del tutorial interactivo.
     """
     sig_actualizar_instruccion = pyqtSignal(str, str) 
+    sig_senalar_ui = pyqtSignal(str)
     sig_resaltar_ui = pyqtSignal(str) 
     sig_tutorial_finalizado = pyqtSignal()
 
@@ -19,12 +20,13 @@ class TutorialManager(QObject):
             "ENCENDER_CAMARA",
             "INFO_CAMARA",
             "DETECTAR_MANO",
-            "EXPLICACION_GESTOS", # Nuevo: Intro a gestos
+            "EXPLICACION_GESTOS",
             "PRUEBA_GESTO_1",     # Paz 
             "PRUEBA_GESTO_2",     # Nuevo: Like
-            "INFO_PERSONALIZACION", # Nuevo: Explicar config
+            "ABRIR_MENU",
+            "INFO_PERSONALIZACION",
             "MODO_MOUSE",     
-            "EXPLICACION_MOUSE",  # Nuevo: Explicar Dwell Click
+            "EXPLICACION_MOUSE",
             "FIN"
         ]
 
@@ -59,7 +61,7 @@ class TutorialManager(QObject):
 
         elif paso == "ENCENDER_CAMARA":
             self.sig_actualizar_instruccion.emit("PASO 1: ACTIVACIÓN", "Haz click en 'Iniciar Cámara'.\nEsto activa tu motor de visión.")
-            self.sig_resaltar_ui.emit("btn_camara")
+            self.sig_senalar_ui.emit("btn_camara")
 
         elif paso == "INFO_CAMARA":
             self.sig_actualizar_instruccion.emit("TIP DE SEGURIDAD", "Puedes apagar la cámara en cualquier momento\npulsando el mismo botón.")
@@ -77,23 +79,26 @@ class TutorialManager(QObject):
 
         elif paso == "PRUEBA_GESTO_1":
             self.gesto_objetivo_actual = "Paz"
-            self.sig_actualizar_instruccion.emit("PRUEBA 1", f"Haz 'Amor y Paz' ✌️y mantén.\nEspera el borde verde para confirmar.\nEsto abrirá el Menú Inicio.")
+            self.sig_actualizar_instruccion.emit("PRUEBA 1", f"Haz 'Amor y Paz' ✌️y mantén.\nEspera el borde verde para confirmar.")
             self.sig_resaltar_ui.emit("")
 
         elif paso == "PRUEBA_GESTO_2":
             self.gesto_objetivo_actual = "Like"
-            self.sig_actualizar_instruccion.emit("PRUEBA 2", f"Haz un 'Like' 👍 y mantén.\nEspera el borde verde para confirmar. \nEsto cambia de canción.")
+            self.sig_actualizar_instruccion.emit("PRUEBA 2", f"Haz un 'Like' 👍 y mantén.\nEspera el borde verde para confirmar.")
             self.sig_resaltar_ui.emit("")
 
+        elif paso == "ABRIR_MENU":
+            self.sig_actualizar_instruccion.emit("PASO 2: ABRIR MENÚ DE GESTOS", "Haz click en 'Gestos'.\nEsto abrirá el menú de configuración.")
+            self.sig_senalar_ui.emit("btn_menu")
+
         elif paso == "INFO_PERSONALIZACION":
-            self.sig_actualizar_instruccion.emit(
-                "PERSONALIZACIÓN", "En el panel de configuración verás\nlistas desplegables junto a cada gesto.\nÚsalas y explora las opciones de acción")
+            self.sig_actualizar_instruccion.emit("PERSONALIZACIÓN", "En el menú de configuración verás\nlistas desplegables junto a cada gesto.\nÚsalas y explora las opciones de acción")
             self.sig_resaltar_ui.emit("btn_menu")
             QTimer.singleShot(10000, self.siguiente_paso)
 
         elif paso == "MODO_MOUSE":
             self.sig_actualizar_instruccion.emit("PASO 3: MOUSE", "Activa el 'Modo Mouse' en el dock\npara controlar el cursor.")
-            self.sig_resaltar_ui.emit("btn_mouse")
+            self.sig_senalar_ui.emit("btn_mouse")
 
         elif paso == "EXPLICACION_MOUSE":
             self.sig_actualizar_instruccion.emit("¿CÓMO HACER CLICK?", "Mueve con tu dedo índice.\nMANTÉN FIJO para hacer Click.")
@@ -110,9 +115,9 @@ class TutorialManager(QObject):
         self.sig_tutorial_finalizado.emit()
 
     # --- Event listeners ---
-
     def evento_camara_encendida(self):
         if self.activo and self.pasos[self.paso_actual] == "ENCENDER_CAMARA":
+            self.sig_resaltar_ui.emit("btn_camara")
             self.siguiente_paso()
 
     def evento_mano_detectada(self):
@@ -126,6 +131,12 @@ class TutorialManager(QObject):
                 self.sig_actualizar_instruccion.emit("¡CORRECTO!", f"Gesto {nombre_gesto} detectado.")
                 QTimer.singleShot(2000, self.siguiente_paso)
 
+    def evento_menu_abierto(self):
+        if self.activo and self.pasos[self.paso_actual] == "ABRIR_MENU":
+            self.sig_resaltar_ui.emit("btn_menu")
+            self.siguiente_paso()
+
     def evento_mouse_activado(self):
         if self.activo and self.pasos[self.paso_actual] == "MODO_MOUSE":
+            self.sig_resaltar_ui.emit("btn_mouse")
             self.siguiente_paso()

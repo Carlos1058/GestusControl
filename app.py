@@ -26,6 +26,7 @@ class GestusApp(QMainWindow):
         self.camara_activa = False
         self.modo_mouse_activo = False
         self.sidebar_expanded = False
+        self.tutorial_activo = False
 
         # --- UI SETUP V2 ---
         self.setup_ui_v2()
@@ -45,6 +46,7 @@ class GestusApp(QMainWindow):
         self.tutorial = TutorialManager()
 
         self.tutorial.sig_actualizar_instruccion.connect(self.overlay.set_tutorial_info)
+        self.tutorial.sig_senalar_ui.connect(self.senalar_widget)
         self.tutorial.sig_resaltar_ui.connect(self.resaltar_widget)
         self.tutorial.sig_tutorial_finalizado.connect(self.on_tutorial_finalizado)
 
@@ -86,7 +88,7 @@ class GestusApp(QMainWindow):
         dock_layout.setSpacing(20)
 
         # Botones del Dock
-        self.btn_camara = self.crear_boton_dock("📷 Iniciar", self.toggle_camara)
+        self.btn_camara = self.crear_boton_dock("📷 Iniciar", self.toggle_camara, checkable=True)
         self.btn_mouse = self.crear_boton_dock("🖱️ Mouse", self.toggle_mouse_mode, checkable=True)
         self.btn_menu = self.crear_boton_dock("⚙️ Gestos", self.toggle_sidebar, checkable=True)
         self.btn_tutorial = self.crear_boton_dock("🎓 Tutorial", self.iniciar_tutorial)
@@ -188,6 +190,9 @@ class GestusApp(QMainWindow):
         self.sidebar.setFixedWidth(width)
         # Forzar resize para actualizar geometría
         self.resizeEvent(None)
+        
+        if self.sidebar_expanded:
+            self.tutorial.evento_menu_abierto()
 
     def show_toast(self, mensaje):
         self.toast.setText(mensaje)
@@ -221,47 +226,63 @@ class GestusApp(QMainWindow):
         self.tutorial.evento_mano_detectada()
 
     def iniciar_tutorial(self):
+        if not self.tutorial_activo:
+            self.tutorial_activo = True
+            self.btn_tutorial.setStyleSheet("""
+                QPushButton#DockButton {
+                    background-color: rgba(0, 229, 255, 50); 
+                    border: 2px solid #00e5ff;
+                    color: #00e5ff;
+                }
+            """)
 
-        self.toggle_sidebar() # Cerrar sidebar
-        self.tutorial.iniciar()
+            if self.modo_mouse_activo:
+                self.toggle_mouse_mode()
+
+            if self.camara_activa:
+                self.btn_camara.setChecked(False)
+                self.camara_activa = False
+                self.btn_camara.setText("📷 Iniciar")
+
+            if self.sidebar_expanded:
+                self.toggle_sidebar()
+                self.btn_menu.setChecked(False)
+
+            self.tutorial.iniciar()
 
     def on_tutorial_finalizado(self):
+        self.tutorial_activo = False
+        self.btn_tutorial.setStyleSheet("")
+        with open("styles.qss", "r") as f:
+            self.setStyleSheet(f.read())
         self.show_toast("🎓 Tutorial Completado")
 
-    def resaltar_widget(self, nombre_widget):
-        """
-        Resalta un widget por nombre para guiar al usuario.
-        Si nombre_widget es vacío, limpia resaltados.
-        """
-        estilo_normal = """
+    def senalar_widget(self, nombre_widget):
+        estilo_senalado = """
             QPushButton#DockButton {
-                background-color: transparent;
-                border: none;
-                border-radius: 10px;
-                padding: 10px;
-                color: white;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            QPushButton#DockButton:hover {
-                background-color: rgba(255, 255, 255, 20);
-                border: 1px solid rgba(0, 229, 255, 100);
-            }
-            QPushButton#DockButton:checked {
-                background-color: rgba(0, 229, 255, 50);
-                border: 1px solid #00e5ff;
-                color: #00e5ff;
+                background-color: rgba(60, 200, 60, 50);
+                border: 3px solid #32CD32; 
             }
         """
+
+        widgets = {
+            "btn_camara": self.btn_camara,
+            "btn_mouse": self.btn_mouse,
+            "btn_menu": self.btn_menu,
+        }
+
+        # Primero limpiar todos
+        for w in widgets.values():
+            w.setStyleSheet("")
+
+        if nombre_widget in widgets:
+            widgets[nombre_widget].setStyleSheet(estilo_senalado)
+
+    def resaltar_widget(self, nombre_widget):
         estilo_resaltado = """
             QPushButton#DockButton {
                 background-color: rgba(0, 229, 255, 20);
                 border: 2px solid #00e5ff;
-                border-radius: 10px;
-                padding: 10px;
-                color: white;
-                font-weight: bold;
-                font-size: 12px;
             }
         """
 
@@ -273,10 +294,6 @@ class GestusApp(QMainWindow):
 
         # Primero limpiar todos
         for w in widgets.values():
-            # Esto es un hack simple, idealmente usaríamos qss dinámico o clases
-            # Pero dado que el qss carga al inicio, aquí forzamos estilos locales
-            # que tienen prioridad.
-            # Para 'limpiar', removemos el estilo local para que use el de la hoja de estilos global.
             w.setStyleSheet("") 
 
         if nombre_widget in widgets:
@@ -387,6 +404,7 @@ class GestusApp(QMainWindow):
                     border-radius: 5px;
                     padding: 5px;
                     font-size: 14px;
+                    width: 100px;
                 }
                 QComboBox::drop-down { border: none; }
                 QComboBox QAbstractItemView {

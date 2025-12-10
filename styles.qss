@@ -7,7 +7,7 @@ QMainWindow {
 QLabel {
     color: #ffffff;
     font-family: 'Segoe UI', 'Roboto', sans-serif;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 /* Floating Dock (Glass Effect) */
@@ -77,13 +77,4 @@ QLabel#SidebarHeader {
     background-color: #000000;
     border: 2px solid rgba(0, 229, 255, 50);
     border-radius: 15px;
-}
-
-
-
-/* Nuevo estilo para el tutorial (Verde) */
-QPushButton[tutorial_resaltado="true"] {
-    background-color: rgba(60, 200, 60, 50); /* Fondo verdoso */
-    border: 3px solid #32CD32; /* Borde verde fuerte */
-    border-radius: 10px;
 }

@@ -87,6 +87,15 @@ def cambiar_pestana():
     print("ACCIÓN: Cambiando Pestaña...")
     pyautogui.hotkey('ctrl', 'tab')
 
+def cambiar_programa():
+    """Alterna entre programas abiertos (Alt + Tab)."""
+    print("ACCIÓN: Cambiando Programa...")
+    pyautogui.hotkey('alt', 'tab')
+
+def modo_mouse():
+    """Esta es solo una función placeholder."""
+    print("ACCIÓN PLACEHOLDER: Cambio de Modo Gestos/Mouse...")
+    # pass
 
 
 # --- Mapa de Acciones Actualizado ---
@@ -106,4 +115,6 @@ MAPA_ACCIONES = {
     "Siguiente Cancion": siguiente_cancion,
     "Pausar/Reproducir": pausar_musica,
     "Cambiar Pestana": cambiar_pestana,
+    "Cambiar Programa": cambiar_programa,
+    "Alternar Modo Mouse/Gestos": modo_mouse,
 }
