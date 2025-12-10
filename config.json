@@ -5,10 +5,6 @@
       "descripcion": "No hace nada."
     },
     {
-      "nombre": "Confirmar",
-      "descripcion": "Confirma la ejecucion de una accion."
-    },
-    {
       "nombre": "Abrir YouTube",
       "descripcion": "Abre YouTube en el navegador."
     },

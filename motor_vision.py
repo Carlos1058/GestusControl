@@ -33,7 +33,7 @@ class MotorVision(QThread):
         # Variables de estado
         self.gesto_actual_persistente = "Desconocido"
         self.tiempo_inicio_gesto = 0
-        self.TIEMPO_PARA_CONFIRMAR = 1.5 # Segundos para confirmar manteniendo
+        self.TIEMPO_PARA_CONFIRMAR = 1.0 # Segundos para confirmar manteniendo
         self.accion_ejecutada = False
 
         # --- Variables Modo Mouse ---
@@ -68,6 +68,7 @@ class MotorVision(QThread):
         return self.modo_mouse
 
     def run(self):
+        self.running = True
         cap = cv2.VideoCapture(0)
         feedback_anterior = ("", "", "")
 
