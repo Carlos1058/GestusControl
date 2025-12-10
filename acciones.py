@@ -23,10 +23,10 @@ def abrir_calculadora():
         except FileNotFoundError:
             print("No se encontró la calculadora.")
 
-def abrir_wikipedia():
+def abrir_google():
     """Abre wikipedia.org en el navegador."""
     print("ACCIÓN: Abriendo Wikipedia...")
-    webbrowser.open("https://www.wikipedia.org")
+    webbrowser.open("https://www.google.com/?zx=1765353925178&no_sw_cr=1")
 
 
 # --- Nuevas Acciones de Control del Sistema ---
@@ -104,7 +104,7 @@ def modo_mouse():
 MAPA_ACCIONES = {
     "Abrir YouTube": abrir_youtube,
     "Abrir calculadora": abrir_calculadora,
-    "Abrir Wikipedia": abrir_wikipedia,
+    "Abrir Google": abrir_google,
     "Abrir menu de inicio": abrir_menu_inicio,
     "Activar Cortana": activar_cortana,
     "Subir brillo": subir_brillo,
@@ -116,5 +116,6 @@ MAPA_ACCIONES = {
     "Pausar/Reproducir": pausar_musica,
     "Cambiar Pestana": cambiar_pestana,
     "Cambiar Programa": cambiar_programa,
-    "Alternar Modo Mouse/Gestos": modo_mouse,
+    "Alternar Modo Gestos/Mouse": "",
+    "Cerrar Programa": "",
 }

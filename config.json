@@ -49,12 +49,12 @@
       "descripcion": "Silencia o activa el sonido del sistema."
     },
     {
-      "nombre": "Siguiente Cancion",
-      "descripcion": "Salta a la siguiente pista multimedia."
-    },
-    {
       "nombre": "Pausar/Reproducir",
       "descripcion": "Pausa o reproduce el contenido multimedia."
+    },
+    {
+      "nombre": "Siguiente Cancion",
+      "descripcion": "Salta a la siguiente pista multimedia."
     },
     {
       "nombre": "Cambiar Pestana",
@@ -65,20 +65,24 @@
       "descripcion": "Cambia a la siguiente pestaña del sistema (Alt+Tab)."
     },
     {
-      "nombre": "Alternar Modo Mouse/Gestos",
+      "nombre": "Alternar Modo Gestos/Mouse",
       "descripcion": "Cambia entre el control de mouse y la ejecución de gestos."
+    },
+    {
+      "nombre": "Cerrar Programa",
+      "descripcion": "Cierra la aplicación GestusControl de forma segura."
     }
   ],
   "gestos": [
     {
       "nombre": "Like",
       "emoji": "👍🏻",
-      "accion_nombre": "Siguiente Cancion"
+      "accion_nombre": "Alternar Modo Gestos/Mouse"
     },
     {
       "nombre": "Mano abierta",
       "emoji": "🖐🏻",
-      "accion_nombre": "Cambiar Programa"
+      "accion_nombre": "Cerrar Programa"
     },
     {
       "nombre": "Puno cerrado",
@@ -98,7 +102,7 @@
     {
       "nombre": "Llamame",
       "emoji": "🤙🏻",
-      "accion_nombre": "Ninguna"
+      "accion_nombre": "Siguiente Cancion"
     },
     {
       "nombre": "Pulgar abajo",
@@ -118,7 +122,7 @@
     {
       "nombre": "Indice Arriba",
       "emoji": "☝🏻",
-      "accion_nombre": "Subir brillo"
+      "accion_nombre": "Cambiar Programa"
     }
   ]
 }

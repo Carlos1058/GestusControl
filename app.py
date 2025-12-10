@@ -42,6 +42,9 @@ class GestusApp(QMainWindow):
         self.hilo_vision.gesto_confirmado_signal.connect(self.on_gesto_confirmado) # Modificado
         self.hilo_vision.mano_detectada.connect(self.on_mano_detectada)
 
+        self.hilo_vision.solicitud_toggle_modo.connect(self.alternar_modo_mouse)
+        self.hilo_vision.solicitud_cierre.connect(self.cerrar_aplicacion)
+
         # Tutorial System
         self.tutorial = TutorialManager()
 
@@ -190,7 +193,7 @@ class GestusApp(QMainWindow):
         self.sidebar.setFixedWidth(width)
         # Forzar resize para actualizar geometría
         self.resizeEvent(None)
-        
+
         if self.sidebar_expanded:
             self.tutorial.evento_menu_abierto()
 
@@ -456,6 +459,13 @@ class GestusApp(QMainWindow):
         except Exception as e:
             print(f"Error guardando config: {e}")
             self.show_toast("❌ Error al guardar")
+
+    def alternar_modo_mouse(self):
+        """Accion para cambiar de modo gestos a mouse."""
+        self.toggle_mouse_mode()
+
+    def cerrar_aplicacion(self):
+        QApplication.instance().quit()
 
     def closeEvent(self, event):
         if self.hilo_vision:

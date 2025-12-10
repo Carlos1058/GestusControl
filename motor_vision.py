@@ -15,6 +15,9 @@ class MotorVision(QThread):
     gesto_confirmado_signal = pyqtSignal(str) # Nombre del gesto confirmado
     gesto_cancelado_signal = pyqtSignal()
     mano_detectada = pyqtSignal() # Nueva señal para tutorial
+    solicitud_cierre = pyqtSignal()
+
+    solicitud_toggle_modo = pyqtSignal()
 
     # Señal para Dwell Click
     dwell_progreso = pyqtSignal(float, int, int) # Progreso (0-1), X, Y
@@ -299,11 +302,19 @@ class MotorVision(QThread):
         nombre_accion = next((g.get("accion_nombre") for g in self.config_gestos["gestos"] if g["nombre"] == nombre_gesto), None)
 
         if nombre_accion and nombre_accion != "Ninguna":
-            if nombre_accion in ac.MAPA_ACCIONES:
-                print(f"Ejecutando: {nombre_accion}")
-                ac.MAPA_ACCIONES[nombre_accion]()
-            else:
-                print(f"Acción no encontrada en mapa: {nombre_accion}")
+            if nombre_accion == "Cerrar Programa":
+                print("Accion: Cerrar Programa")
+                self.solicitud_cierre.emit()
+            elif nombre_accion == "Alternar Modo Gestos/Mouse":
+                print("ACCIÓN: Alternar Modo Mouse/Gestos")
+                self.solicitud_toggle_modo.emit()
+
+            else: 
+                if nombre_accion in ac.MAPA_ACCIONES:
+                    print(f"Ejecutando: {nombre_accion}")
+                    ac.MAPA_ACCIONES[nombre_accion]()
+                else:
+                    print(f"Acción no encontrada en mapa: {nombre_accion}")
 
     def stop(self):
         self.running = False
